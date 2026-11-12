@@ -45,7 +45,8 @@ unei facultăți: **auditorii, discipline (obiecte), profesori, grupe și sarcin
 ## Pornire
 
 ### Varianta gata compilată
-`dist\OrarStudio.exe` — un singur fișier, **nu necesită instalarea .NET** (Windows 10/11, x64).
+Descărcați **`OrarStudio-1.0.0-win-x64.zip`** din [Releases](https://github.com/ProiectDeSemestru/OrarStudio/releases/latest),
+dezarhivați și porniți `OrarStudio.exe` — un singur fișier, **nu necesită instalarea .NET** (Windows 10/11, x64).
 La prima pornire se încarcă datele demonstrative (sarcina didactică din fișierele-exemplu + un orar generat automat).
 
 ### Din codul sursă
