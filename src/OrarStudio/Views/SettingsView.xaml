@@ -1,0 +1,165 @@
+<UserControl x:Class="OrarStudio.Views.SettingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="clr-namespace:OrarStudio.UI"
+             xmlns:m="clr-namespace:OrarStudio.Models">
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <Grid Margin="20,16,20,20" MaxWidth="1300" HorizontalAlignment="Left">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" MinWidth="440"/>
+                <ColumnDefinition Width="16"/>
+                <ColumnDefinition Width="*" MinWidth="440"/>
+            </Grid.ColumnDefinitions>
+
+            <StackPanel>
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="Instituția" Style="{StaticResource Text.H3}" Margin="0,0,0,12"/>
+                        <TextBlock Text="Universitatea" Style="{StaticResource Text.Label}"/>
+                        <TextBox Text="{Binding Draft.Institution, UpdateSourceTrigger=PropertyChanged}"/>
+                        <TextBlock Text="Facultatea" Style="{StaticResource Text.Label}" Margin="0,12,0,6"/>
+                        <TextBox Text="{Binding Draft.Faculty, UpdateSourceTrigger=PropertyChanged}"/>
+                        <TextBlock Text="Departamentul" Style="{StaticResource Text.Label}" Margin="0,12,0,6"/>
+                        <TextBox Text="{Binding Draft.Department, UpdateSourceTrigger=PropertyChanged}"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource Card}" Margin="0,16,0,0">
+                    <StackPanel>
+                        <TextBlock Text="Semestrul" Style="{StaticResource Text.H3}" Margin="0,0,0,12"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="12"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="Anul universitar" Style="{StaticResource Text.Label}"/>
+                                <TextBox Text="{Binding Draft.AcademicYear, UpdateSourceTrigger=PropertyChanged}" ui:Ui.Placeholder="2023-2024"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="Semestrul" Style="{StaticResource Text.Label}"/>
+                                <TextBox Text="{Binding Draft.Semester, UpdateSourceTrigger=PropertyChanged}" ui:Ui.Placeholder="I"/>
+                            </StackPanel>
+                        </Grid>
+                        <Grid Margin="0,12,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="12"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="Începutul semestrului" Style="{StaticResource Text.Label}"/>
+                                <DatePicker SelectedDate="{Binding Draft.SemesterStart}"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="Numărul de săptămâni" Style="{StaticResource Text.Label}"/>
+                                <ComboBox ItemsSource="{Binding WeekOptions}" SelectedItem="{Binding Draft.Weeks}"/>
+                            </StackPanel>
+                        </Grid>
+                        <TextBlock Text="Zile cu lecții" Style="{StaticResource Text.Label}" Margin="0,14,0,6"/>
+                        <ListBox Style="{StaticResource Segmented}" ItemsSource="{Binding DayOptions}" SelectedItem="{Binding Draft.DaysPerWeek}">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock>
+                                        <Run Text="{Binding Mode=OneWay}"/><Run Text=" zile"/>
+                                    </TextBlock>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                        <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding Draft.FirstWeekOdd}" Margin="0,14,0,0"
+                                      Content="Prima săptămână a semestrului este impară"/>
+                        <TextBlock Text="Paritatea săptămânii determină lecțiile „impar / par” afișate pe panou și în calendar." Style="{StaticResource Text.Muted}" TextWrapping="Wrap" Margin="0,6,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource Card}" Margin="0,16,0,0">
+                    <StackPanel>
+                        <TextBlock Text="Panoul informativ" Style="{StaticResource Text.H3}" Margin="0,0,0,12"/>
+                        <TextBlock Text="Mesaj afișat în partea de jos a panoului" Style="{StaticResource Text.Label}"/>
+                        <TextBox Style="{StaticResource Input.Multiline}" Text="{Binding Draft.BoardMessage, UpdateSourceTrigger=PropertyChanged}"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Background="{DynamicResource Brush.DangerSoft}" CornerRadius="8" Padding="12,9" Margin="0,16,0,0"
+                        Visibility="{Binding Error, Converter={StaticResource NullToVis}}">
+                    <TextBlock Text="{Binding Error}" Foreground="{DynamicResource Brush.Danger}" TextWrapping="Wrap"/>
+                </Border>
+                <StackPanel Orientation="Horizontal" Margin="0,16,0,0">
+                    <Button Style="{StaticResource Btn.Primary}" ui:Ui.Icon="&#xE74E;" Content="Salvează setările" Command="{Binding SaveCommand}" Margin="0,0,8,0"/>
+                    <Button Content="Renunță la modificări" Command="{Binding ResetCommand}"/>
+                </StackPanel>
+            </StackPanel>
+
+            <StackPanel Grid.Column="2">
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <DockPanel Margin="0,0,0,12">
+                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                                <Button Style="{StaticResource Btn.Ghost}" Content="Valori implicite" Command="{Binding DefaultSlotsCommand}" Padding="8,4" MinHeight="30"/>
+                                <Button Style="{StaticResource Btn.Soft}" ui:Ui.Icon="&#xE710;" Content="Pereche" Command="{Binding AddSlotCommand}" Padding="10,4" MinHeight="30" Margin="6,0,0,0"/>
+                            </StackPanel>
+                            <StackPanel>
+                                <TextBlock Text="Perechile (intervalele orare)" Style="{StaticResource Text.H3}"/>
+                                <TextBlock Text="Format HH:mm · o pereche = 90 de minute" Style="{StaticResource Text.Muted}"/>
+                            </StackPanel>
+                        </DockPanel>
+                        <ItemsControl ItemsSource="{Binding Draft.TimeSlots}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="{x:Type m:TimeSlot}">
+                                    <Grid Margin="0,0,0,8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="50"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="24"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Border Width="36" Height="32" CornerRadius="8" Background="{DynamicResource Brush.AccentSoft}" HorizontalAlignment="Left">
+                                            <TextBlock Text="{Binding Number}" FontWeight="Bold" Foreground="{DynamicResource Brush.AccentSoftText}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                        <TextBox Grid.Column="1" Text="{Binding Start, UpdateSourceTrigger=PropertyChanged}"/>
+                                        <TextBlock Grid.Column="2" Text="–" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource Brush.TextMuted}"/>
+                                        <TextBox Grid.Column="3" Text="{Binding End, UpdateSourceTrigger=PropertyChanged}"/>
+                                        <Button Grid.Column="4" Style="{StaticResource Btn.Icon}" ui:Ui.Icon="&#xE74D;" Margin="6,0,0,0" ToolTip="Elimină perechea"
+                                                Command="{Binding DataContext.RemoveSlotCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource Card}" Margin="0,16,0,0">
+                    <StackPanel>
+                        <TextBlock Text="Aspect" Style="{StaticResource Text.H3}" Margin="0,0,0,12"/>
+                        <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding IsDark}" Content="Temă întunecată" Margin="0,0,0,10"/>
+                        <ToggleButton Style="{StaticResource Switch}" IsChecked="{Binding ColorBySubject}" Content="Colorare după disciplină (bara din stânga cartonașelor)"/>
+                        <TextBlock Text="Implicit, culoarea indică tipul lecției: curs, seminar sau laborator." Style="{StaticResource Text.Muted}" Margin="0,6,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource Card}" Margin="0,16,0,0">
+                    <StackPanel>
+                        <TextBlock Text="Datele proiectului" Style="{StaticResource Text.H3}" Margin="0,0,0,4"/>
+                        <TextBlock Text="{Binding DataInfo}" Style="{StaticResource Text.Muted}"/>
+                        <TextBox Text="{Binding DataPath, Mode=OneWay}" IsReadOnly="True" Margin="0,10,0,0" FontSize="12"/>
+                        <WrapPanel Margin="0,12,0,0">
+                            <Button ui:Ui.Icon="&#xE838;" Content="Arată fișierul" Command="{Binding OpenDataFolderCommand}" Margin="0,0,8,8"/>
+                            <Button ui:Ui.Icon="&#xE74E;" Content="Salvează ca…" Command="{Binding DataContext.SaveAsCommand, RelativeSource={RelativeSource AncestorType=Window}}" Margin="0,0,8,8"/>
+                            <Button ui:Ui.Icon="&#xE8E5;" Content="Deschide…" Command="{Binding DataContext.OpenCommand, RelativeSource={RelativeSource AncestorType=Window}}" Margin="0,0,8,8"/>
+                            <Button ui:Ui.Icon="&#xE8F4;" Content="Proiect nou…" Command="{Binding DataContext.NewProjectCommand, RelativeSource={RelativeSource AncestorType=Window}}" Margin="0,0,8,8"/>
+                        </WrapPanel>
+                        <Border Style="{StaticResource Divider}"/>
+                        <TextBlock Text="Fișiere-exemplu" Style="{StaticResource Text.H3}" FontSize="13"/>
+                        <TextBlock Text="Sarcina didactică a departamentelor (DI semestrele I, III, V — .xlsx; Matematică — .docx). Se pot importa din nou oricând." Style="{StaticResource Text.Muted}" TextWrapping="Wrap" Margin="0,2,0,10"/>
+                        <WrapPanel>
+                            <Button ui:Ui.Icon="&#xE8B7;" Content="Deschide dosarul cu exemple" Command="{Binding OpenSamplesCommand}" Margin="0,0,8,8"/>
+                            <Button Style="{StaticResource Btn.Soft}" ui:Ui.Icon="&#xE7BE;" Content="Reîncarcă datele demonstrative" Command="{Binding DataContext.LoadDemoCommand, RelativeSource={RelativeSource AncestorType=Window}}" Margin="0,0,8,8"/>
+                        </WrapPanel>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </Grid>
+    </ScrollViewer>
+</UserControl>

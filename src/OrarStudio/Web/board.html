@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Panou informativ — orar</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0a0f1e; --card: #111a2e; --card2: #0e1628; --line: #1e2a44;
+      --text: #f1f5f9; --muted: #93a3c0; --dim: #62728f; --free: #34d399;
+      --curs: #6366f1; --sem: #e0701a; --lab: #0e9f87; --accent: #6366f1;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; }
+    body { background: var(--bg); color: var(--text); font: 16px/1.35 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      display: flex; flex-direction: column; padding: 2.2vh 2.6vw; overflow: hidden; }
+    header { display: flex; justify-content: space-between; align-items: center; gap: 24px; }
+    .inst { color: var(--muted); font-weight: 600; font-size: clamp(13px, 1.1vw, 18px); }
+    h1 { margin: 4px 0 10px; font-size: clamp(22px, 2.2vw, 38px); }
+    .chip { display: inline-block; padding: 5px 14px; border-radius: 10px; background: #1e1b4b; color: #c7d2fe; font-weight: 600; font-size: clamp(13px, 1vw, 17px); }
+    .clock { text-align: right; }
+    .clock .t { font-size: clamp(48px, 5.6vw, 96px); font-weight: 800; line-height: 1; }
+    .clock .t small { font-size: .4em; color: var(--dim); font-weight: 600; }
+    .clock .d { color: var(--muted); font-size: clamp(15px, 1.3vw, 22px); margin-top: 6px; }
+    .status { margin: 2.2vh 0 1.6vh; background: var(--card); border-radius: 16px; padding: 16px 22px; display: flex; align-items: center; gap: 18px; }
+    .status .main { flex: 1; }
+    .status .main b { display: block; font-size: clamp(18px, 1.6vw, 26px); }
+    .status .main span { color: var(--muted); font-size: clamp(14px, 1.15vw, 19px); }
+    .bar { width: 22vw; max-width: 320px; height: 10px; background: var(--line); border-radius: 5px; overflow: hidden; }
+    .bar i { display: block; height: 100%; background: var(--accent); border-radius: 5px; width: 0; transition: width .6s; }
+    .thead, .row { display: grid; grid-template-columns: 22% 1.15fr 1fr; gap: 20px; align-items: center; }
+    .thead { padding: 0 22px 10px; color: var(--dim); font-weight: 700; font-size: 13px; letter-spacing: .06em; }
+    #rows { flex: 1; overflow: hidden; }
+    .row { background: var(--card2); border-radius: 14px; padding: 12px 22px; margin-bottom: 8px; min-height: 84px; }
+    .row.busy { background: var(--card); }
+    .row .name b { display: block; font-size: clamp(20px, 1.7vw, 28px); }
+    .row .name span { color: var(--dim); font-size: 13.5px; }
+    .entry { display: grid; grid-template-columns: 5px 1fr; gap: 12px; margin: 3px 0; }
+    .entry i { border-radius: 3px; background: var(--curs); }
+    .entry.seminar i { background: var(--sem); } .entry.laborator i { background: var(--lab); }
+    .entry b { display: block; font-size: clamp(16px, 1.3vw, 21px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .entry span { color: var(--muted); font-size: clamp(13px, 1vw, 16px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+    .next { display: grid; grid-template-columns: auto 1fr; gap: 12px; margin: 3px 0; }
+    .next em { font-style: normal; background: var(--line); border-radius: 6px; padding: 2px 8px; color: var(--muted); font-weight: 600; height: fit-content; }
+    .next b { display: block; color: #cbd5e1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .next span { color: var(--dim); font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+    .free { color: var(--free); font-weight: 600; font-size: 19px; display: flex; align-items: center; gap: 10px; }
+    .free::before { content: ""; width: 11px; height: 11px; border-radius: 50%; background: var(--free); }
+    footer { display: flex; justify-content: space-between; color: var(--muted); margin-top: 1.4vh; gap: 20px; font-size: clamp(13px, 1.05vw, 17px); }
+    .empty { text-align: center; color: var(--muted); padding: 10vh 0; font-size: 22px; }
+    .err { color: #f87171; }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <div class="inst" id="inst">&nbsp;</div>
+      <h1 id="fac">Orarul lecțiilor</h1>
+      <span class="chip" id="week"></span>
+    </div>
+    <div class="clock"><div class="t" id="time">--:--</div><div class="d" id="date"></div></div>
+  </header>
+  <div class="status">
+    <div class="main"><b id="slot">—</b><span id="status">Se încarcă…</span></div>
+    <div class="bar"><i id="progress"></i></div>
+  </div>
+  <div class="thead"><div id="h1">AUDITORIUL</div><div>ACUM</div><div>URMEAZĂ</div></div>
+  <div id="rows"></div>
+  <footer><div id="msg"></div><div><span id="page"></span> &nbsp; <span id="updated"></span></div></footer>
+  <script src="assets/board.js"></script>
+</body>
+</html>

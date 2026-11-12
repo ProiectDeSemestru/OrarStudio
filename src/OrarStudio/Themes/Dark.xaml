@@ -1,0 +1,89 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- Temă întunecată: aceleași chei ca în Light.xaml -->
+    <Color x:Key="C.Shadow">#000000</Color>
+    <Color x:Key="C.Accent">#6366F1</Color>
+
+    <SolidColorBrush x:Key="Brush.Window" Color="#0B1020"/>
+    <SolidColorBrush x:Key="Brush.Surface" Color="#121A2B"/>
+    <SolidColorBrush x:Key="Brush.SurfaceAlt" Color="#162036"/>
+    <SolidColorBrush x:Key="Brush.Sunken" Color="#0E1526"/>
+    <SolidColorBrush x:Key="Brush.Border" Color="#24304A"/>
+    <SolidColorBrush x:Key="Brush.BorderStrong" Color="#334366"/>
+    <SolidColorBrush x:Key="Brush.GridLine" Color="#1E2940"/>
+
+    <SolidColorBrush x:Key="Brush.Text" Color="#E6EAF2"/>
+    <SolidColorBrush x:Key="Brush.TextSecondary" Color="#A9B4C8"/>
+    <SolidColorBrush x:Key="Brush.TextMuted" Color="#6F7C96"/>
+
+    <SolidColorBrush x:Key="Brush.Accent" Color="#6366F1"/>
+    <SolidColorBrush x:Key="Brush.AccentHover" Color="#7376F4"/>
+    <SolidColorBrush x:Key="Brush.AccentPressed" Color="#575BE0"/>
+    <SolidColorBrush x:Key="Brush.AccentSoft" Color="#23285A"/>
+    <SolidColorBrush x:Key="Brush.AccentSoftText" Color="#C7CAFF"/>
+    <SolidColorBrush x:Key="Brush.OnAccent" Color="#FFFFFF"/>
+
+    <SolidColorBrush x:Key="Brush.Hover" Color="#1A2440"/>
+    <SolidColorBrush x:Key="Brush.Pressed" Color="#202B4A"/>
+    <SolidColorBrush x:Key="Brush.Selection" Color="#23285A"/>
+
+    <SolidColorBrush x:Key="Brush.Success" Color="#10B981"/>
+    <SolidColorBrush x:Key="Brush.SuccessSoft" Color="#0B2E25"/>
+    <SolidColorBrush x:Key="Brush.Warning" Color="#F59E0B"/>
+    <SolidColorBrush x:Key="Brush.WarningSoft" Color="#33270B"/>
+    <SolidColorBrush x:Key="Brush.Danger" Color="#F87171"/>
+    <SolidColorBrush x:Key="Brush.DangerSoft" Color="#3A1418"/>
+    <SolidColorBrush x:Key="Brush.Info" Color="#38BDF8"/>
+    <SolidColorBrush x:Key="Brush.InfoSoft" Color="#0B2838"/>
+
+    <LinearGradientBrush x:Key="Brush.Sidebar" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#0B1124" Offset="0"/>
+        <GradientStop Color="#070B17" Offset="1"/>
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="Brush.SidebarText" Color="#CBD5E1"/>
+    <SolidColorBrush x:Key="Brush.SidebarTextMuted" Color="#5C6985"/>
+    <SolidColorBrush x:Key="Brush.SidebarHover" Color="#151D36"/>
+    <SolidColorBrush x:Key="Brush.SidebarSelected" Color="#6366F1"/>
+    <SolidColorBrush x:Key="Brush.SidebarBorder" Color="#18203A"/>
+
+    <SolidColorBrush x:Key="Brush.Curs" Color="#6366F1"/>
+    <SolidColorBrush x:Key="Brush.CursSoft" Color="#1F2251"/>
+    <SolidColorBrush x:Key="Brush.Seminar" Color="#E0701A"/>
+    <SolidColorBrush x:Key="Brush.SeminarSoft" Color="#3A2414"/>
+    <SolidColorBrush x:Key="Brush.Lab" Color="#0E9F87"/>
+    <SolidColorBrush x:Key="Brush.LabSoft" Color="#0C2E2B"/>
+
+    <SolidColorBrush x:Key="Brush.Input" Color="#0F1729"/>
+    <SolidColorBrush x:Key="Brush.InputBorder" Color="#2A3654"/>
+    <SolidColorBrush x:Key="Brush.ScrollThumb" Color="#33415F"/>
+    <SolidColorBrush x:Key="Brush.Overlay" Color="#99000000"/>
+    <SolidColorBrush x:Key="Brush.Tooltip" Color="#1F2937"/>
+    <SolidColorBrush x:Key="Brush.TooltipText" Color="#F8FAFC"/>
+
+    <SolidColorBrush x:Key="Brush.DropOk" Color="#0F3325"/>
+    <SolidColorBrush x:Key="Brush.DropWarn" Color="#3A2E0E"/>
+    <SolidColorBrush x:Key="Brush.DropBad" Color="#3B1519"/>
+    <SolidColorBrush x:Key="Brush.Today" Color="#141D38"/>
+    <SolidColorBrush x:Key="Brush.ChartBar" Color="#6366F1"/>
+    <SolidColorBrush x:Key="Brush.ChartTrack" Color="#1B2540"/>
+
+    <DrawingBrush x:Key="Brush.Hatch" TileMode="Tile" Viewport="0,0,8,8" ViewportUnits="Absolute" Viewbox="0,0,8,8" ViewboxUnits="Absolute">
+        <DrawingBrush.Drawing>
+            <DrawingGroup>
+                <GeometryDrawing Brush="#101828">
+                    <GeometryDrawing.Geometry>
+                        <RectangleGeometry Rect="0,0,8,8"/>
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+                <GeometryDrawing>
+                    <GeometryDrawing.Pen>
+                        <Pen Brush="#1E2A44" Thickness="1.2"/>
+                    </GeometryDrawing.Pen>
+                    <GeometryDrawing.Geometry>
+                        <LineGeometry StartPoint="0,8" EndPoint="8,0"/>
+                    </GeometryDrawing.Geometry>
+                </GeometryDrawing>
+            </DrawingGroup>
+        </DrawingBrush.Drawing>
+    </DrawingBrush>
+</ResourceDictionary>

@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Orarul lecțiilor</title>
+  <meta name="description" content="Orarul lecțiilor pentru grupe, profesori și auditorii — generat de Orar Studio.">
+  <link rel="stylesheet" href="assets/site.css">
+  <!--STATIC-->
+</head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <div class="logo" aria-hidden="true">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/><rect x="7" y="13" width="3" height="3" rx="1" fill="currentColor" stroke="none"/></svg>
+      </div>
+      <div style="min-width:0">
+        <div class="inst" id="inst">&nbsp;</div>
+        <h1 id="fac">Orarul lecțiilor</h1>
+      </div>
+    </div>
+    <div class="meta">
+      <span class="chip" id="week"></span>
+      <span class="chip muted" id="sem"></span>
+    </div>
+  </header>
+
+  <main>
+    <section class="controls">
+      <div class="tabs" role="tablist" aria-label="Tipul orarului">
+        <button role="tab" data-kind="group" class="active">Grupe</button>
+        <button role="tab" data-kind="teacher">Profesori</button>
+        <button role="tab" data-kind="room">Auditorii</button>
+      </div>
+      <div class="picker">
+        <input type="search" id="search" placeholder="Caută…" aria-label="Caută">
+        <select id="entity" aria-label="Alegeți"></select>
+      </div>
+      <div class="actions">
+        <a id="pdf" class="btn" target="_blank" rel="noopener">⤓ PDF</a>
+        <a id="ics" class="btn ghost">📅 Calendar</a>
+        <label class="toggle"><input type="checkbox" id="today"> Doar azi</label>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="title-row">
+        <h2 id="title">Se încarcă…</h2>
+        <p id="subtitle"></p>
+      </div>
+      <div id="grid" class="grid"></div>
+      <div id="days" class="days"></div>
+      <div class="legend">
+        <span class="c">Curs</span><span class="se">Seminar</span><span class="l">Laborator</span>
+        <span style="padding-left:6px">impar / par = săptămâni alternante · sg. = subgrupă</span>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    Date furnizate de <b>Orar Studio</b> prin API · <a href="docs" id="docsLink">Documentația API</a> · <a href="board">Panou informativ</a> ·
+    actualizat <span id="updated"></span>
+  </footer>
+  <script src="assets/site.js"></script>
+</body>
+</html>

@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>API — Orar Studio</title>
+  <link rel="stylesheet" href="assets/site.css">
+  <style>
+    .doc { max-width: 1040px; margin: 0 auto; padding: 26px 28px 50px; }
+    .doc h2 { margin: 30px 0 10px; font-size: 19px; }
+    .doc p { color: var(--text-2); margin: 6px 0; }
+    table { width: 100%; border-collapse: collapse; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+    th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+    th { background: var(--surface-alt); color: var(--text-2); font-size: 12.5px; }
+    tr:last-child td { border-bottom: 0; }
+    code, pre { font-family: "Cascadia Mono", Consolas, monospace; font-size: 12.5px; }
+    td code { background: var(--sunken); padding: 2px 6px; border-radius: 5px; }
+    pre { background: #0f172a; color: #e2e8f0; padding: 16px 18px; border-radius: 12px; overflow: auto; line-height: 1.5; }
+    .get { display: inline-block; background: #dcfce7; color: #166534; font-weight: 700; font-size: 11px; padding: 2px 7px; border-radius: 5px; }
+    @media (prefers-color-scheme: dark) { .get { background: #0b2e25; color: #34d399; } }
+  </style>
+</head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <div class="logo" aria-hidden="true">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 9l-4 3 4 3M16 9l4 3-4 3M13 6l-2 12"/></svg>
+      </div>
+      <div><div class="inst">Orar Studio</div><h1>Documentația API</h1></div>
+    </div>
+    <div class="meta"><a class="chip" href="./">← Orarul</a><a class="chip muted" href="board">Panou</a></div>
+  </header>
+
+  <div class="doc">
+    <p>API-ul REST este găzduit de aplicația desktop <b>Orar Studio</b> (ASP.NET Core). Toate răspunsurile sunt JSON (UTF-8), metoda este <b>GET</b>,
+      iar CORS este deschis — orarul poate fi afișat direct pe site-ul facultății. Datele se actualizează automat la fiecare modificare făcută în aplicație.</p>
+
+    <h2>Endpoint-uri</h2>
+    <table>
+      <tr><th style="width:62px">Metodă</th><th>Adresă</th><th>Descriere</th></tr>
+      <tr><td><span class="get">GET</span></td><td><a href="api/info"><code>/api/info</code></a></td><td>Instituția, semestrul, zilele, perechile (orele), săptămâna curentă și paritatea ei.</td></tr>
+      <tr><td><span class="get">GET</span></td><td><a href="api/bundle"><code>/api/bundle</code></a></td><td>Tot orarul într-un singur răspuns: <code>info</code>, <code>groups</code>, <code>teachers</code>, <code>rooms</code>, <code>subjects</code>, <code>lessons</code>.</td></tr>
+      <tr><td><span class="get">GET</span></td><td><a href="api/groups"><code>/api/groups</code></a></td><td>Grupele (cod, specialitate, an, limbă, studenți, subgrupe).</td></tr>
+      <tr><td><span class="get">GET</span></td><td><a href="api/teachers"><code>/api/teachers</code></a></td><td>Profesorii (id, nume, titlu, departament).</td></tr>
+      <tr><td><span class="get">GET</span></td><td><a href="api/rooms"><code>/api/rooms</code></a></td><td>Auditoriile: categorie, capacitate, destinație (<code>curs</code>/<code>seminar</code>/<code>laborator</code>), dotări.</td></tr>
+      <tr><td><span class="get">GET</span></td><td><a href="api/subjects"><code>/api/subjects</code></a></td><td>Disciplinele (denumire, abreviere, culoare).</td></tr>
+      <tr><td><span class="get">GET</span></td><td><code>/api/lessons?group=&amp;teacher=&amp;room=&amp;day=&amp;type=&amp;week=</code></td><td>Lecțiile, filtrate. <code>day</code>: 0 = luni; <code>type</code>: curs | seminar | laborator; <code>week</code>: impar | par.</td></tr>
+      <tr><td><span class="get">GET</span></td><td><code>/api/schedule/group/{cod}</code></td><td>Orarul săptămânal al unei grupe (ex. <code>I2301</code>), cu zilele și perechile.</td></tr>
+      <tr><td><span class="get">GET</span></td><td><code>/api/schedule/teacher/{id sau nume}</code></td><td>Orarul unui profesor (ex. <code>V.-Arnaut</code>).</td></tr>
+      <tr><td><span class="get">GET</span></td><td><code>/api/schedule/room/{id sau nume}</code></td><td>Orarul unui auditoriu (ex. <code>404</code>).</td></tr>
+      <tr><td><span class="get">GET</span></td><td><a href="api/now?mode=rooms"><code>/api/now?mode=rooms|groups|teachers&amp;at=</code></a></td><td>Starea pentru panoul informativ: perechea curentă, ce are loc acum și ce urmează. <code>at</code> (opțional) simulează un moment, ex. <code>2023-10-03T10:05</code>.</td></tr>
+      <tr><td><span class="get">GET</span></td><td><code>/api/pdf/group/{cod}</code>, <code>/api/pdf/teacher/{id}</code>, <code>/api/pdf/room/{id}</code>, <a href="api/pdf/overview"><code>/api/pdf/overview</code></a></td><td>Orarul în PDF, generat la cerere (<code>?download=1</code> pentru descărcare).</td></tr>
+      <tr><td><span class="get">GET</span></td><td><code>/api/ics/group/{cod}</code></td><td>Calendar iCalendar (.ics) cu lecțiile recurente ale grupei.</td></tr>
+      <tr><td><span class="get">GET</span></td><td><a href="api/health"><code>/api/health</code></a></td><td>Verificarea stării serverului.</td></tr>
+    </table>
+
+    <h2>Exemplu — afișarea orarului unei grupe pe site</h2>
+<pre>fetch('http://SERVER:5080/api/schedule/group/I2301')
+  .then(r =&gt; r.json())
+  .then(data =&gt; {
+    for (const l of data.lessons) {
+      console.log(`${l.dayName}, perechea ${l.slotRoman} (${l.start}–${l.end}): ` +
+                  `${l.subject} [${l.typeLabel}] · ${l.teacher} · aud. ${l.room}` +
+                  (l.week !== 'saptamanal' ? ` · ${l.weekLabel}` : ''));
+    }
+  });</pre>
+
+    <h2>Încorporare (iframe)</h2>
+<pre>&lt;iframe src="http://SERVER:5080/?group=I2301&amp;embed=1" width="100%" height="720" style="border:0"&gt;&lt;/iframe&gt;</pre>
+
+    <h2>Structura unei lecții</h2>
+<pre>{
+  "id": "…", "day": 0, "dayName": "Luni", "slot": 2, "slotRoman": "II", "start": "09:45", "end": "11:15",
+  "week": "saptamanal" | "impar" | "par", "weekLabel": "Săptămânal",
+  "type": "curs" | "seminar" | "laborator", "typeLabel": "Curs",
+  "subjectId": "…", "subject": "Fundamentele Programării", "subjectShort": "FP", "color": "#6366F1",
+  "teacherId": "…", "teacher": "V. Arnaut", "teacherTitle": "dr., conf. univ.",
+  "roomId": "…", "room": "101", "groups": ["I2301", "IA2301", "IA2302"], "note": ""
+}</pre>
+    <p>Publicare „push”: din aplicație (Web &amp; API → Publicare) se poate trimite tot pachetul <code>/api/bundle</code> printr-o cerere POST către un endpoint al site-ului, cu antetul <code>Authorization: Bearer &lt;token&gt;</code>.</p>
+  </div>
+</body>
+</html>

@@ -1,0 +1,233 @@
+<UserControl x:Class="OrarStudio.Views.ActivitiesView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="clr-namespace:OrarStudio.UI"
+             xmlns:vm="clr-namespace:OrarStudio.ViewModels"
+             xmlns:m="clr-namespace:OrarStudio.Models">
+    <Grid Margin="20,16,20,16">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- ═════════ Lista activităților ═════════ -->
+        <Border Style="{StaticResource Card}" Padding="0">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Top" Margin="18,16,18,12">
+                    <DockPanel>
+                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                            <Button ui:Ui.Icon="&#xE8E5;" Content="Importă din fișiere" Command="{Binding ImportCommand}" Margin="0,0,8,0"
+                                    ToolTip="Importă sarcina didactică din fișierele departamentelor (.xlsx, .docx, .csv)"/>
+                            <Button ui:Ui.Icon="&#xE945;" Content="Generează orarul" Command="{Binding GenerateCommand}" Margin="0,0,8,0"/>
+                            <Button Style="{StaticResource Btn.Primary}" ui:Ui.Icon="&#xE710;" Content="Adaugă" Command="{Binding AddCommand}"/>
+                        </StackPanel>
+                        <StackPanel>
+                            <TextBlock Text="Activități didactice" Style="{StaticResource Text.H3}"/>
+                            <TextBlock Text="{Binding CountText}" Style="{StaticResource Text.Muted}"/>
+                        </StackPanel>
+                    </DockPanel>
+                    <Grid Margin="0,14,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" MaxWidth="340"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBox ui:Ui.Icon="&#xE721;" ui:Ui.Placeholder="Caută după disciplină, grupă sau profesor…"
+                                 Text="{Binding Search, UpdateSourceTrigger=PropertyChanged}"/>
+                        <ListBox Grid.Column="1" Style="{StaticResource Segmented}" ItemsSource="{Binding TypeFilters}" SelectedItem="{Binding TypeFilter}" Margin="12,0,0,0" VerticalAlignment="Center">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate><TextBlock Text="{Binding Label}"/></DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                        <ListBox Grid.Column="2" Style="{StaticResource Segmented}" ItemsSource="{Binding StatusFilters}" SelectedItem="{Binding StatusFilter}" Margin="10,0,0,0" VerticalAlignment="Center">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate><TextBlock Text="{Binding Label}"/></DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </Grid>
+                    <Grid Margin="0,14,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <ProgressBar Maximum="1" Value="{Binding Coverage, Mode=OneWay}" Height="6" VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="1" Text="{Binding CoverageText}" Style="{StaticResource Text.Muted}" Margin="12,0,0,0"/>
+                    </Grid>
+                </StackPanel>
+
+                <DataGrid ItemsSource="{Binding RowsView}" SelectedItem="{Binding Selected}" CanUserSortColumns="True" BorderThickness="0,1,0,0"
+                          BorderBrush="{DynamicResource Brush.Border}">
+                    <DataGrid.Columns>
+                        <DataGridTemplateColumn Header="Disciplina" Width="2.2*" SortMemberPath="Subject">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate DataType="{x:Type vm:ActivityRow}">
+                                    <StackPanel Orientation="Horizontal" ToolTip="{Binding Source}">
+                                        <Ellipse Width="9" Height="9" Fill="{Binding SubjectColor, Converter={StaticResource HexToBrush}}" Margin="0,0,9,0" VerticalAlignment="Center"/>
+                                        <TextBlock Text="{Binding Subject}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Header="Tip" Width="104" SortMemberPath="Type">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate DataType="{x:Type vm:ActivityRow}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Border x:Name="Sw" Width="4" Height="16" CornerRadius="2" Background="{DynamicResource Brush.Curs}" Margin="0,0,8,0"/>
+                                        <TextBlock Text="{Binding TypeLabel}" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                    <DataTemplate.Triggers>
+                                        <DataTrigger Binding="{Binding Type}" Value="{x:Static m:LessonType.Seminar}">
+                                            <Setter TargetName="Sw" Property="Background" Value="{DynamicResource Brush.Seminar}"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding Type}" Value="{x:Static m:LessonType.Laborator}">
+                                            <Setter TargetName="Sw" Property="Background" Value="{DynamicResource Brush.Lab}"/>
+                                        </DataTrigger>
+                                    </DataTemplate.Triggers>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTextColumn Header="Ore" Binding="{Binding Hours}" Width="52"/>
+                        <DataGridTextColumn Header="Grupe" Binding="{Binding Groups}" Width="1.5*"/>
+                        <DataGridTextColumn Header="Stud." Binding="{Binding Students}" Width="56"/>
+                        <DataGridTextColumn Header="Profesor" Binding="{Binding Teacher}" Width="1.2*"/>
+                        <DataGridTextColumn Header="Limba" Binding="{Binding Language}" Width="58"/>
+                        <DataGridTemplateColumn Header="Plasat" Width="120" SortMemberPath="Placed">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate DataType="{x:Type vm:ActivityRow}">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <ProgressBar x:Name="P" Maximum="1" Value="{Binding Progress, Mode=OneWay}" VerticalAlignment="Center"/>
+                                        <TextBlock Grid.Column="1" Text="{Binding ProgressText}" Margin="8,0,0,0" FontSize="12" Foreground="{DynamicResource Brush.TextSecondary}"/>
+                                    </Grid>
+                                    <DataTemplate.Triggers>
+                                        <DataTrigger Binding="{Binding StatusKind}" Value="2">
+                                            <Setter TargetName="P" Property="Foreground" Value="{DynamicResource Brush.Success}"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding StatusKind}" Value="3">
+                                            <Setter TargetName="P" Property="Foreground" Value="{DynamicResource Brush.Warning}"/>
+                                        </DataTrigger>
+                                    </DataTemplate.Triggers>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                    <DataGrid.InputBindings>
+                        <MouseBinding MouseAction="LeftDoubleClick" Command="{Binding OpenInEditorCommand}"/>
+                        <KeyBinding Key="Delete" Command="{Binding DeleteCommand}"/>
+                    </DataGrid.InputBindings>
+                </DataGrid>
+            </DockPanel>
+        </Border>
+
+        <!-- ═════════ Formular ═════════ -->
+        <Border Grid.Column="1" Style="{StaticResource Card}" Padding="0" Width="390" Margin="16,0,0,0" Visibility="{Binding HasDraft, Converter={StaticResource BoolToVis}}">
+            <Grid>
+                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Margin="30" Visibility="{Binding HasDraft, Converter={StaticResource BoolToVisInv}}">
+                    <Border Width="56" Height="56" CornerRadius="28" Background="{DynamicResource Brush.AccentSoft}">
+                        <TextBlock Text="&#xE8FD;" Style="{StaticResource Icon}" FontSize="22" Foreground="{DynamicResource Brush.Accent}"/>
+                    </Border>
+                    <TextBlock Text="Selectați o activitate" Style="{StaticResource Text.H3}" HorizontalAlignment="Center" Margin="0,14,0,4"/>
+                    <TextBlock Text="Dublu-clic pe un rând deschide activitatea în editorul de orar." Style="{StaticResource Text.Muted}" TextWrapping="Wrap" TextAlignment="Center"/>
+                    <Button Style="{StaticResource Btn.Soft}" ui:Ui.Icon="&#xE710;" Content="Activitate nouă" Command="{Binding AddCommand}" Margin="0,16,0,0" HorizontalAlignment="Center"/>
+                </StackPanel>
+
+                <DockPanel Visibility="{Binding HasDraft, Converter={StaticResource BoolToVis}}">
+                    <Border DockPanel.Dock="Bottom" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="0,1,0,0" Padding="18,12">
+                        <DockPanel>
+                            <Button DockPanel.Dock="Left" Style="{StaticResource Btn.Danger}" ui:Ui.Icon="&#xE74D;" Content="Șterge" Command="{Binding DeleteCommand}"
+                                    Visibility="{Binding IsNew, Converter={StaticResource BoolToVisInv}}"/>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                <Button Content="Anulează" Command="{Binding CancelCommand}" Margin="0,0,8,0"/>
+                                <Button Style="{StaticResource Btn.Primary}" ui:Ui.Icon="&#xE74E;" Content="Salvează" Command="{Binding SaveCommand}" IsDefault="True"/>
+                            </StackPanel>
+                        </DockPanel>
+                    </Border>
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <StackPanel Margin="20,18,20,18">
+                            <TextBlock>
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock" BasedOn="{StaticResource Text.H2}">
+                                        <Setter Property="Text" Value="Editare activitate"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsNew}" Value="True">
+                                                <Setter Property="Text" Value="Activitate nouă"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                            <TextBlock Text="{Binding LinkedInfo}" Style="{StaticResource Text.Muted}" TextWrapping="Wrap" Margin="0,4,0,14"/>
+
+                            <TextBlock Text="Disciplina" Style="{StaticResource Text.Label}"/>
+                            <ComboBox ItemsSource="{Binding Subjects}" SelectedItem="{Binding Draft.Subject}" DisplayMemberPath="Name"
+                                      IsTextSearchEnabled="True" TextSearch.TextPath="Name" ui:Ui.Placeholder="Alegeți disciplina…"/>
+
+                            <TextBlock Text="Tipul lecției" Style="{StaticResource Text.Label}" Margin="0,14,0,6"/>
+                            <ListBox Style="{StaticResource Segmented}" ItemsSource="{Binding Types}" SelectedItem="{Binding Draft.Type}">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate><TextBlock Text="{Binding Converter={StaticResource EnumLabel}}"/></DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+
+                            <Grid Margin="0,14,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="12"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <TextBlock Text="Ore pe săptămână" Style="{StaticResource Text.Label}"/>
+                                    <ComboBox ItemsSource="{Binding HourOptions}" SelectedItem="{Binding Draft.Hours}"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="Limba de predare" Style="{StaticResource Text.Label}"/>
+                                    <ComboBox ItemsSource="{Binding Languages}" SelectedItem="{Binding Draft.Language}">
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate><TextBlock Text="{Binding Converter={StaticResource EnumLabel}}"/></DataTemplate>
+                                        </ComboBox.ItemTemplate>
+                                    </ComboBox>
+                                </StackPanel>
+                            </Grid>
+                            <TextBlock Text="2 ore = o pereche săptămânal; 1 oră = o pereche la două săptămâni (impar/par)." Style="{StaticResource Text.Muted}" TextWrapping="Wrap" Margin="0,6,0,0"/>
+
+                            <TextBlock Text="Profesorul" Style="{StaticResource Text.Label}" Margin="0,14,0,6"/>
+                            <ComboBox ItemsSource="{Binding Teachers}" SelectedItem="{Binding Draft.Teacher}" IsTextSearchEnabled="True" TextSearch.TextPath="Label">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate DataType="{x:Type vm:TeacherOption}">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="{Binding Label}"/>
+                                            <TextBlock Text="{Binding Detail}" Foreground="{DynamicResource Brush.TextMuted}" Margin="8,0,0,0" FontSize="12"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+
+                            <TextBlock Text="Grupe / subgrupe (seria)" Style="{StaticResource Text.Label}" Margin="0,14,0,6"/>
+                            <TextBox Text="{Binding Draft.GroupsText, UpdateSourceTrigger=PropertyChanged}" ui:Ui.Placeholder="ex. I2301, IA2301 sau I2301-1"/>
+                            <TextBlock Text="Mai multe grupe = curs pe serie. Subgrupa se scrie cu cratimă: I2301-1." Style="{StaticResource Text.Muted}" TextWrapping="Wrap" Margin="0,6,0,0"/>
+
+                            <TextBlock Text="Numărul de studenți" Style="{StaticResource Text.Label}" Margin="0,14,0,6"/>
+                            <TextBox Text="{Binding Draft.Students, UpdateSourceTrigger=PropertyChanged, TargetNullValue=0}" ui:Ui.Placeholder="0 = calculat din grupe"/>
+
+                            <TextBlock Text="Note" Style="{StaticResource Text.Label}" Margin="0,14,0,6"/>
+                            <TextBox Style="{StaticResource Input.Multiline}" Text="{Binding Draft.Notes, UpdateSourceTrigger=PropertyChanged}" ui:Ui.Placeholder="ex. sală cu tablă, săptămâna 1–8…"/>
+
+                            <Border Background="{DynamicResource Brush.DangerSoft}" CornerRadius="8" Padding="12,9" Margin="0,14,0,0"
+                                    Visibility="{Binding Error, Converter={StaticResource NullToVis}}">
+                                <TextBlock Text="{Binding Error}" Foreground="{DynamicResource Brush.Danger}" TextWrapping="Wrap"/>
+                            </Border>
+
+                            <StackPanel Orientation="Horizontal" Margin="0,16,0,0" Visibility="{Binding IsNew, Converter={StaticResource BoolToVisInv}}">
+                                <Button Style="{StaticResource Btn.Soft}" ui:Ui.Icon="&#xE945;" Content="Plasează automat" Command="{Binding PlaceSelectedCommand}" Margin="0,0,8,0"/>
+                                <Button Style="{StaticResource Btn.Soft}" ui:Ui.Icon="&#xE787;" Content="Arată în orar" Command="{Binding OpenInEditorCommand}"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </ScrollViewer>
+                </DockPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

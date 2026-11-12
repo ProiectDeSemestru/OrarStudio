@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/OrarStudio/OrarStudio.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/OrarStudio.Tests/OrarStudio.Tests.csproj" />
+  </Folder>
+</Solution>

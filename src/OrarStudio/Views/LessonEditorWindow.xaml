@@ -1,0 +1,259 @@
+<Window x:Class="OrarStudio.Views.LessonEditorWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="clr-namespace:OrarStudio.UI"
+        xmlns:vm="clr-namespace:OrarStudio.ViewModels"
+        Style="{StaticResource DialogWindow}" Title="Lecție — Orar Studio">
+    <Window.Resources>
+        <Style x:Key="ChipToggle" TargetType="ToggleButton">
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="{DynamicResource Brush.Text}"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Border x:Name="Bd" CornerRadius="8" Padding="9,4" Margin="0,0,6,6" Background="{DynamicResource Brush.Sunken}"
+                                BorderBrush="Transparent" BorderThickness="1">
+                            <ContentPresenter/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource Brush.BorderStrong}"/>
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Brush.Accent}"/>
+                                <Setter Property="Foreground" Value="White"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Border Style="{StaticResource DialogShell}" Width="820">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- antet -->
+            <Grid x:Name="Header" Margin="24,20,16,12" Background="Transparent">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <Border Width="40" Height="40" CornerRadius="12" Background="{DynamicResource Brush.AccentSoft}">
+                    <TextBlock Text="&#xE787;" Style="{StaticResource Icon}" Foreground="{DynamicResource Brush.Accent}"/>
+                </Border>
+                <StackPanel Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding Title}" Style="{StaticResource Text.H2}"/>
+                    <TextBlock Text="{Binding Subtitle}" Style="{StaticResource Text.Muted}" TextTrimming="CharacterEllipsis"/>
+                </StackPanel>
+                <Button Grid.Column="2" Style="{StaticResource Btn.Icon}" ui:Ui.Icon="&#xE711;" Command="{Binding CancelCommand}" VerticalAlignment="Top" ToolTip="Închide (Esc)"/>
+            </Grid>
+
+            <!-- conținut -->
+            <Grid Grid.Row="1" Margin="24,0,24,6">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="22"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel>
+                    <TextBlock Text="Din sarcina didactică (opțional)" Style="{StaticResource Text.Label}"/>
+                    <ComboBox ItemsSource="{Binding Activities}" SelectedItem="{Binding Activity}" MaxDropDownHeight="360">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate DataType="{x:Type vm:ActivityOption}">
+                                <StackPanel>
+                                    <TextBlock Text="{Binding Label}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                                    <TextBlock Text="{Binding Detail}" FontSize="11" Foreground="{DynamicResource Brush.TextMuted}" TextTrimming="CharacterEllipsis"
+                                               Visibility="{Binding Detail, Converter={StaticResource NullToVis}}"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+
+                    <TextBlock Text="Disciplina" Style="{StaticResource Text.Label}" Margin="0,14,0,6"/>
+                    <ComboBox ItemsSource="{Binding Subjects}" SelectedItem="{Binding Subject}" DisplayMemberPath="Name" IsTextSearchEnabled="True"
+                              TextSearch.TextPath="Name" ui:Ui.Placeholder="Alegeți disciplina…"/>
+
+                    <TextBlock Text="Tipul" Style="{StaticResource Text.Label}" Margin="0,14,0,6"/>
+                    <ListBox Style="{StaticResource Segmented}" ItemsSource="{Binding Types}" SelectedItem="{Binding Type}">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate><TextBlock Text="{Binding Converter={StaticResource EnumLabel}}"/></DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+
+                    <TextBlock Text="Profesorul" Style="{StaticResource Text.Label}" Margin="0,14,0,6"/>
+                    <ComboBox ItemsSource="{Binding Teachers}" SelectedItem="{Binding Teacher}" IsTextSearchEnabled="True" TextSearch.TextPath="Label">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate DataType="{x:Type vm:TeacherOption}">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{Binding Label}"/>
+                                    <TextBlock Text="{Binding Detail}" Foreground="{DynamicResource Brush.TextMuted}" FontSize="12" Margin="8,0,0,0"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+
+                    <Grid Margin="0,14,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="10"/>
+                            <ColumnDefinition Width="1.3*"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Text="Ziua" Style="{StaticResource Text.Label}"/>
+                            <ComboBox ItemsSource="{Binding Days}" SelectedItem="{Binding Day}" DisplayMemberPath="Label"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="Perechea" Style="{StaticResource Text.Label}"/>
+                            <ComboBox ItemsSource="{Binding Slots}" SelectedItem="{Binding Slot}" DisplayMemberPath="Label"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <TextBlock Text="Periodicitatea" Style="{StaticResource Text.Label}" Margin="0,14,0,6"/>
+                    <ListBox Style="{StaticResource Segmented}" ItemsSource="{Binding Weeks}" SelectedItem="{Binding Week}">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate><TextBlock Text="{Binding Label}"/></DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+
+                    <TextBlock Text="Auditoriul" Style="{StaticResource Text.Label}" Margin="0,14,0,6"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <ComboBox ItemsSource="{Binding Rooms}" SelectedItem="{Binding Room}" MaxDropDownHeight="380" IsTextSearchEnabled="True" TextSearch.TextPath="Label">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate DataType="{x:Type vm:RoomOption}">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Ellipse x:Name="Dot" Width="8" Height="8" Margin="0,0,8,0" VerticalAlignment="Center" Fill="#22C55E"/>
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                            <TextBlock Text="{Binding Label}" FontWeight="SemiBold"/>
+                                            <TextBlock Text="{Binding Detail}" Foreground="{DynamicResource Brush.TextMuted}" FontSize="11.5" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                        <TextBlock Grid.Column="2" Text="{Binding Status}" FontSize="11" Foreground="{DynamicResource Brush.TextMuted}" Margin="10,0,0,0" VerticalAlignment="Center"/>
+                                    </Grid>
+                                    <DataTemplate.Triggers>
+                                        <DataTrigger Binding="{Binding Suitable}" Value="False">
+                                            <Setter TargetName="Dot" Property="Fill" Value="#F59E0B"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding Free}" Value="False">
+                                            <Setter TargetName="Dot" Property="Fill" Value="#EF4444"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding Model}" Value="{x:Null}">
+                                            <Setter TargetName="Dot" Property="Fill" Value="#94A3B8"/>
+                                        </DataTrigger>
+                                    </DataTemplate.Triggers>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                        <Button Grid.Column="1" Style="{StaticResource Btn.Soft}" ui:Ui.Icon="&#xE945;" Content="Auto" Command="{Binding AutoRoomCommand}" Margin="8,0,0,0"
+                                ToolTip="Alege cea mai potrivită sală liberă (destinație, capacitate)"/>
+                    </Grid>
+
+                    <TextBlock Text="Notă" Style="{StaticResource Text.Label}" Margin="0,14,0,6"/>
+                    <TextBox Text="{Binding Note, UpdateSourceTrigger=PropertyChanged}" ui:Ui.Placeholder="ex. doar săptămânile 1–8"/>
+                    <CheckBox Content="Blocată (generatorul automat nu o mută)" IsChecked="{Binding Locked}" Margin="0,12,0,0"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="2">
+                    <StackPanel>
+                        <TextBlock Text="Grupe și subgrupe" Style="{StaticResource Text.Label}"/>
+                        <TextBlock Style="{StaticResource Text.Secondary}" TextWrapping="Wrap" Margin="0,0,0,8">
+                            <Run Text="{Binding GroupsSummary, Mode=OneWay}" FontWeight="SemiBold" Foreground="{DynamicResource Brush.Text}"/>
+                            <Run Text="{Binding StudentsInfo, Mode=OneWay}"/>
+                        </TextBlock>
+                        <TextBox ui:Ui.Icon="&#xE721;" ui:Ui.Placeholder="Filtrează grupele…" Text="{Binding AudienceSearch, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+                    </StackPanel>
+
+                    <Border CornerRadius="10" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" Padding="10,10,4,4" Height="292">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <ItemsControl ItemsSource="{Binding Audiences}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="{x:Type vm:AudienceOption}">
+                                        <ToggleButton Style="{StaticResource ChipToggle}" IsChecked="{Binding IsSelected}"
+                                                      Visibility="{Binding IsVisible, Converter={StaticResource BoolToVis}}" ToolTip="{Binding Detail}">
+                                            <TextBlock x:Name="L" Text="{Binding Code}" FontWeight="SemiBold"/>
+                                        </ToggleButton>
+                                        <DataTemplate.Triggers>
+                                            <DataTrigger Binding="{Binding IsGroup}" Value="False">
+                                                <Setter TargetName="L" Property="FontWeight" Value="Normal"/>
+                                            </DataTrigger>
+                                        </DataTemplate.Triggers>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </Border>
+
+                    <Border CornerRadius="10" Padding="12,10" Margin="0,10,0,0" Background="{DynamicResource Brush.SurfaceAlt}"
+                            BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1">
+                        <StackPanel>
+                            <TextBlock Text="Verificare în timp real" FontWeight="SemiBold" FontSize="12.5" Margin="0,0,0,6"/>
+                            <StackPanel Orientation="Horizontal" Visibility="{Binding Issues.Count, Converter={StaticResource CountToVisInv}}">
+                                <TextBlock Text="&#xE73E;" Style="{StaticResource Icon}" FontSize="12" Foreground="{DynamicResource Brush.Success}" Margin="0,0,8,0"/>
+                                <TextBlock Text="Nu există conflicte în acest interval." Foreground="{DynamicResource Brush.Success}" FontSize="12"/>
+                            </StackPanel>
+                            <ItemsControl ItemsSource="{Binding Issues}" MaxHeight="120">
+                                <ItemsControl.Template>
+                                    <ControlTemplate TargetType="ItemsControl">
+                                        <ScrollViewer VerticalScrollBarVisibility="Auto"><ItemsPresenter/></ScrollViewer>
+                                    </ControlTemplate>
+                                </ItemsControl.Template>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="{x:Type vm:IssueVM}">
+                                        <Grid Margin="0,2">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="20"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock x:Name="I" Text="&#xE7BA;" Style="{StaticResource Icon}" FontSize="11" Foreground="{DynamicResource Brush.Warning}" VerticalAlignment="Top" Margin="0,2,0,0"/>
+                                            <TextBlock Grid.Column="1" Text="{Binding Message}" FontSize="12" TextWrapping="Wrap"/>
+                                        </Grid>
+                                        <DataTemplate.Triggers>
+                                            <DataTrigger Binding="{Binding IsError}" Value="True">
+                                                <Setter TargetName="I" Property="Text" Value="&#xE783;"/>
+                                                <Setter TargetName="I" Property="Foreground" Value="{DynamicResource Brush.Danger}"/>
+                                            </DataTrigger>
+                                        </DataTemplate.Triggers>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+
+                </StackPanel>
+            </Grid>
+
+            <!-- subsol -->
+            <Border Grid.Row="2" Style="{StaticResource DialogFooter}" Margin="0,12,0,0">
+                <DockPanel>
+                    <Button DockPanel.Dock="Left" Style="{StaticResource Btn.Danger}" ui:Ui.Icon="&#xE74D;" Content="Scoate din orar" Command="{Binding DeleteCommand}"
+                            Visibility="{Binding IsNew, Converter={StaticResource BoolToVisInv}}"/>
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                        <Button Content="Anulează" Command="{Binding CancelCommand}" Margin="0,0,8,0" MinWidth="96"/>
+                        <Button Style="{StaticResource Btn.Primary}" ui:Ui.Icon="&#xE74E;" Content="Salvează" Command="{Binding SaveCommand}" IsDefault="True" MinWidth="110"/>
+                    </StackPanel>
+                    <TextBlock Text="{Binding Error}" Foreground="{DynamicResource Brush.Danger}" VerticalAlignment="Center" Margin="12,0" TextWrapping="Wrap"/>
+                </DockPanel>
+            </Border>
+        </Grid>
+    </Border>
+</Window>

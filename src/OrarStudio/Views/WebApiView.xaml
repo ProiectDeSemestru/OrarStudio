@@ -1,0 +1,221 @@
+<UserControl x:Class="OrarStudio.Views.WebApiView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="clr-namespace:OrarStudio.UI"
+             xmlns:vm="clr-namespace:OrarStudio.ViewModels">
+    <UserControl.Resources>
+        <FontFamily x:Key="Mono">Cascadia Mono, Consolas</FontFamily>
+    </UserControl.Resources>
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <Grid Margin="20,16,20,20">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="440"/>
+                <ColumnDefinition Width="16"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <StackPanel>
+                <!-- Server -->
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <DockPanel>
+                            <Border DockPanel.Dock="Left" Width="42" Height="42" CornerRadius="12" Margin="0,0,12,0">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Background" Value="{DynamicResource Brush.Sunken}"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Api.IsRunning}" Value="True">
+                                                <Setter Property="Background" Value="{DynamicResource Brush.SuccessSoft}"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <TextBlock Text="&#xE774;" Style="{StaticResource Icon}" FontSize="18">
+                                    <TextBlock.Foreground>
+                                        <SolidColorBrush Color="#64748B"/>
+                                    </TextBlock.Foreground>
+                                </TextBlock>
+                            </Border>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="Server API integrat" Style="{StaticResource Text.H3}"/>
+                                <StackPanel Orientation="Horizontal" Margin="0,3,0,0">
+                                    <Ellipse Width="8" Height="8" Margin="0,0,7,0">
+                                        <Ellipse.Style>
+                                            <Style TargetType="Ellipse">
+                                                <Setter Property="Fill" Value="#94A3B8"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Api.IsRunning}" Value="True">
+                                                        <Setter Property="Fill" Value="#22C55E"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Ellipse.Style>
+                                    </Ellipse>
+                                    <TextBlock Text="{Binding Api.Status}" Style="{StaticResource Text.Secondary}"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </DockPanel>
+                        <TextBlock Text="ASP.NET Core (Kestrel) găzduit în aplicație: API REST JSON, site-ul public al orarului și panoul web. Doar citire, CORS deschis — poate fi folosit direct de site-ul facultății."
+                                   Style="{StaticResource Text.Secondary}" Margin="0,12,0,14"/>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="110"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="Port" Style="{StaticResource Text.Label}"/>
+                                <TextBox Text="{Binding Port, UpdateSourceTrigger=LostFocus}" IsEnabled="{Binding Api.IsRunning, Converter={StaticResource Not}}"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Margin="16,22,0,0">
+                                <ToggleButton Style="{StaticResource Switch}" Content="Accesibil în rețeaua locală (LAN)" IsChecked="{Binding Lan}" Margin="0,0,0,8"/>
+                                <ToggleButton Style="{StaticResource Switch}" Content="Pornește automat la deschidere" IsChecked="{Binding AutoStart}"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <Border Background="{DynamicResource Brush.SurfaceAlt}" CornerRadius="10" Padding="12,10" Margin="0,14,0,0"
+                                Visibility="{Binding Api.IsRunning, Converter={StaticResource BoolToVis}}">
+                            <StackPanel>
+                                <DockPanel>
+                                    <TextBlock Text="Local:" Width="70" Foreground="{DynamicResource Brush.TextMuted}"/>
+                                    <TextBlock Text="{Binding Api.Url}" FontFamily="{StaticResource Mono}" FontWeight="SemiBold"/>
+                                </DockPanel>
+                                <DockPanel Margin="0,4,0,0" Visibility="{Binding Api.LanUrl, Converter={StaticResource NullToVis}}">
+                                    <TextBlock Text="Rețea:" Width="70" Foreground="{DynamicResource Brush.TextMuted}"/>
+                                    <TextBlock Text="{Binding Api.LanUrl}" FontFamily="{StaticResource Mono}" FontWeight="SemiBold"/>
+                                </DockPanel>
+                                <DockPanel Margin="0,4,0,0">
+                                    <TextBlock Text="Cereri:" Width="70" Foreground="{DynamicResource Brush.TextMuted}"/>
+                                    <TextBlock>
+                                        <Run Text="{Binding Api.Requests, Mode=OneWay}"/><Run Text=" · date actualizate la "/><Run Text="{Binding Api.SnapshotTime, Mode=OneWay, StringFormat={}{0:HH:mm:ss}}"/>
+                                    </TextBlock>
+                                </DockPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <Button Margin="0,14,0,0" HorizontalAlignment="Left" Command="{Binding ToggleServerCommand}" Padding="18,9">
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource Btn.Primary}">
+                                    <Setter Property="Content" Value="Pornește serverul"/>
+                                    <Setter Property="ui:Ui.Icon" Value="&#xE768;"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Api.IsRunning}" Value="True">
+                                            <Setter Property="Content" Value="Oprește serverul"/>
+                                            <Setter Property="ui:Ui.Icon" Value="&#xE71A;"/>
+                                            <Setter Property="Background" Value="{DynamicResource Brush.Danger}"/>
+                                            <Setter Property="BorderBrush" Value="{DynamicResource Brush.Danger}"/>
+                                            <Setter Property="ui:Ui.HoverBackground" Value="{DynamicResource Brush.Danger}"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                    </StackPanel>
+                </Border>
+
+                <!-- Pagini web -->
+                <Border Style="{StaticResource Card}" Margin="0,16,0,0">
+                    <StackPanel>
+                        <TextBlock Text="Pagini web gata de folosit" Style="{StaticResource Text.H3}"/>
+                        <TextBlock Text="Se deschid în browser (serverul pornește automat dacă e oprit)." Style="{StaticResource Text.Muted}" Margin="0,2,0,12"/>
+                        <Button ui:Ui.Icon="&#xE774;" Content="Site-ul public al orarului" Command="{Binding OpenSiteCommand}" HorizontalContentAlignment="Left" Margin="0,0,0,8"/>
+                        <Button ui:Ui.Icon="&#xE7F4;" Content="Panoul informativ web (pentru ecrane)" Command="{Binding OpenWebBoardCommand}" HorizontalContentAlignment="Left" Margin="0,0,0,8"/>
+                        <Button ui:Ui.Icon="&#xE8A5;" Content="Documentația API" Command="{Binding OpenDocsCommand}" HorizontalContentAlignment="Left"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Webhook -->
+                <Border Style="{StaticResource Card}" Margin="0,16,0,0">
+                    <StackPanel>
+                        <TextBlock Text="Publicare pe site-ul facultății (push)" Style="{StaticResource Text.H3}"/>
+                        <TextBlock Text="Trimite tot orarul (JSON, formatul /api/bundle) printr-o cerere POST către un endpoint al site-ului." Style="{StaticResource Text.Muted}" TextWrapping="Wrap" Margin="0,2,0,12"/>
+                        <TextBlock Text="Adresa endpoint-ului" Style="{StaticResource Text.Label}"/>
+                        <TextBox Text="{Binding WebhookUrl, UpdateSourceTrigger=PropertyChanged}" ui:Ui.Placeholder="https://fmi.usm.md/api/orar/import"/>
+                        <TextBlock Text="Token de acces (Authorization: Bearer)" Style="{StaticResource Text.Label}" Margin="0,12,0,6"/>
+                        <TextBox Text="{Binding WebhookToken, UpdateSourceTrigger=PropertyChanged}" ui:Ui.Placeholder="opțional"/>
+                        <DockPanel Margin="0,12,0,0">
+                            <Button DockPanel.Dock="Left" Style="{StaticResource Btn.Primary}" ui:Ui.Icon="&#xE898;" Content="Publică acum" Command="{Binding PublishCommand}"/>
+                            <ContentControl Style="{StaticResource Spinner}" Width="18" Height="18" Margin="10,0,0,0" HorizontalAlignment="Left"
+                                            Visibility="{Binding IsPublishing, Converter={StaticResource BoolToVis}}"/>
+                        </DockPanel>
+                        <TextBlock Text="{Binding PublishResult}" TextWrapping="Wrap" Margin="0,10,0,0" FontSize="12">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="{DynamicResource Brush.Danger}"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding PublishOk}" Value="True">
+                                            <Setter Property="Foreground" Value="{DynamicResource Brush.Success}"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+
+            <StackPanel Grid.Column="2">
+                <Border Style="{StaticResource Card}" Padding="0">
+                    <StackPanel>
+                        <StackPanel Margin="20,18,20,10">
+                            <TextBlock Text="Endpoint-uri REST" Style="{StaticResource Text.H3}"/>
+                            <TextBlock Style="{StaticResource Text.Muted}" Margin="0,2,0,0">
+                                <Run Text="Adresa de bază: "/><Run Text="{Binding BaseUrl, Mode=OneWay}" FontFamily="{StaticResource Mono}"/>
+                            </TextBlock>
+                        </StackPanel>
+                        <ItemsControl ItemsSource="{Binding Endpoints}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="{x:Type vm:EndpointInfo}">
+                                    <Border BorderBrush="{DynamicResource Brush.GridLine}" BorderThickness="0,1,0,0" Padding="20,9">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Border Background="{DynamicResource Brush.SuccessSoft}" CornerRadius="5" Padding="7,2" VerticalAlignment="Center" Margin="0,0,12,0">
+                                                <TextBlock Text="{Binding Method}" FontSize="10.5" FontWeight="Bold" Foreground="{DynamicResource Brush.Success}"/>
+                                            </Border>
+                                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding Path}" FontFamily="{StaticResource Mono}" FontSize="12.5" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                                                <TextBlock Text="{Binding Description}" FontSize="11.5" Foreground="{DynamicResource Brush.TextSecondary}" TextTrimming="CharacterEllipsis"/>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="10,0,0,0">
+                                                <Button Style="{StaticResource Btn.Icon}" ui:Ui.Icon="&#xE8C8;" Width="32" Height="32" ToolTip="Copiază adresa"
+                                                        Command="{Binding DataContext.CopyEndpointCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
+                                                <Button Style="{StaticResource Btn.Icon}" ui:Ui.Icon="&#xE8A7;" Width="32" Height="32" ToolTip="Deschide în browser"
+                                                        Command="{Binding DataContext.OpenEndpointCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource Card}" Margin="0,16,0,0">
+                    <StackPanel>
+                        <TextBlock Text="Integrare pe un site existent" Style="{StaticResource Text.H3}"/>
+                        <TextBlock Text="Încorporați pagina orarului într-un iframe sau citiți datele cu JavaScript:" Style="{StaticResource Text.Muted}" Margin="0,2,0,10"/>
+                        <Grid>
+                            <TextBox Text="{Binding EmbedSnippet, Mode=OneWay}" IsReadOnly="True" FontFamily="{StaticResource Mono}" FontSize="12" TextWrapping="Wrap" Padding="10,9,44,9"/>
+                            <Button Style="{StaticResource Btn.Icon}" ui:Ui.Icon="&#xE8C8;" Width="32" Height="32" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,2,4,0"
+                                    Command="{Binding CopyEmbedCommand}" ToolTip="Copiază"/>
+                        </Grid>
+                        <Grid Margin="0,10,0,0">
+                            <TextBox Text="{Binding FetchSnippet, Mode=OneWay}" IsReadOnly="True" FontFamily="{StaticResource Mono}" FontSize="12" TextWrapping="Wrap"
+                                     AcceptsReturn="True" Padding="10,9,44,9" VerticalContentAlignment="Top"/>
+                            <Button Style="{StaticResource Btn.Icon}" ui:Ui.Icon="&#xE8C8;" Width="32" Height="32" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,2,4,0"
+                                    Command="{Binding CopyFetchCommand}" ToolTip="Copiază"/>
+                        </Grid>
+                        <DockPanel Margin="0,14,0,0">
+                            <Button DockPanel.Dock="Left" Style="{StaticResource Btn.Soft}" ui:Ui.Icon="&#xE8B7;" Content="Exportă site static" Command="{Binding ExportSiteCommand}"/>
+                            <TextBlock Text="Pentru hosting fără server: index.html + data.json." Style="{StaticResource Text.Muted}" VerticalAlignment="Center" Margin="12,0,0,0" TextWrapping="Wrap"/>
+                        </DockPanel>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </Grid>
+    </ScrollViewer>
+</UserControl>

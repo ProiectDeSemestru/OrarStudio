@@ -1,0 +1,106 @@
+<Window x:Class="OrarStudio.Views.AutoScheduleWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="clr-namespace:OrarStudio.UI"
+        Style="{StaticResource DialogWindow}" Title="Generare automată — Orar Studio">
+    <Window.Resources>
+        <Style x:Key="RadioCard" TargetType="RadioButton">
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="Foreground" Value="{DynamicResource Brush.Text}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Border x:Name="Bd" CornerRadius="12" Padding="14,12" Margin="0,0,0,10" BorderThickness="1.5"
+                                BorderBrush="{DynamicResource Brush.Border}" Background="{DynamicResource Brush.Surface}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Border x:Name="Ring" Width="18" Height="18" CornerRadius="9" BorderThickness="1.5" BorderBrush="{DynamicResource Brush.BorderStrong}" VerticalAlignment="Top" Margin="0,2,12,0">
+                                    <Ellipse x:Name="Dot" Width="8" Height="8" Fill="{DynamicResource Brush.Accent}" Visibility="Collapsed"/>
+                                </Border>
+                                <ContentPresenter Grid.Column="1"/>
+                            </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource Brush.Accent}"/>
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource Brush.AccentSoft}"/>
+                                <Setter TargetName="Ring" Property="BorderBrush" Value="{DynamicResource Brush.Accent}"/>
+                                <Setter TargetName="Dot" Property="Visibility" Value="Visible"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Ring" Property="BorderBrush" Value="{DynamicResource Brush.Accent}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Border Style="{StaticResource DialogShell}" Width="600">
+        <StackPanel>
+            <Grid x:Name="Header" Margin="24,20,16,10" Background="Transparent">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <Border Width="40" Height="40" CornerRadius="12" Background="{DynamicResource Brush.AccentSoft}">
+                    <TextBlock Text="&#xE945;" Style="{StaticResource Icon}" Foreground="{DynamicResource Brush.Accent}"/>
+                </Border>
+                <StackPanel Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center">
+                    <TextBlock Text="Generare automată a orarului" Style="{StaticResource Text.H2}"/>
+                    <TextBlock Text="{Binding Info}" Style="{StaticResource Text.Muted}" TextWrapping="Wrap"/>
+                </StackPanel>
+                <Button Grid.Column="2" Style="{StaticResource Btn.Icon}" ui:Ui.Icon="&#xE711;" Command="{Binding CancelCommand}" VerticalAlignment="Top"/>
+            </Grid>
+
+            <StackPanel Margin="24,6,24,6">
+                <RadioButton Style="{StaticResource RadioCard}" GroupName="Mode" IsChecked="{Binding RebuildAll, Converter={StaticResource Not}}">
+                    <StackPanel>
+                        <TextBlock Text="Completează orarul" FontWeight="SemiBold"/>
+                        <TextBlock Text="Plasează doar activitățile nealocate; lecțiile existente rămân neschimbate." Style="{StaticResource Text.Secondary}"/>
+                    </StackPanel>
+                </RadioButton>
+                <RadioButton Style="{StaticResource RadioCard}" GroupName="Mode" IsChecked="{Binding RebuildAll}">
+                    <StackPanel>
+                        <TextBlock Text="Regenerează tot orarul" FontWeight="SemiBold"/>
+                        <TextBlock Text="Șterge lecțiile neblocate și le plasează din nou (anulabil cu Ctrl+Z)." Style="{StaticResource Text.Secondary}"/>
+                    </StackPanel>
+                </RadioButton>
+
+                <Grid Margin="0,6,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="12"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel>
+                        <TextBlock Text="Maximum de perechi pe zi (grupă)" Style="{StaticResource Text.Label}"/>
+                        <ComboBox ItemsSource="{Binding PairOptions}" SelectedItem="{Binding MaxPairsPerDay}"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="Ultima pereche preferată" Style="{StaticResource Text.Label}"/>
+                        <ComboBox ItemsSource="{Binding SlotOptions}" SelectedItem="{Binding LastComfortSlot}"/>
+                    </StackPanel>
+                </Grid>
+                <ToggleButton Style="{StaticResource Switch}" Content="Evită ferestrele (pauzele lungi) între lecții" IsChecked="{Binding AvoidGaps}" Margin="0,16,0,10"/>
+                <ToggleButton Style="{StaticResource Switch}" Content="Respectă doleanțele profesorilor (intervale indisponibile)" IsChecked="{Binding RespectWishes}"/>
+                <TextBlock Text="{Binding LockedInfo}" Style="{StaticResource Text.Muted}" TextWrapping="Wrap" Margin="0,14,0,0"/>
+                <TextBlock Style="{StaticResource Text.Muted}" TextWrapping="Wrap" Margin="0,8,0,0"
+                           Text="Algoritm euristic: întâi cursurile pe serii (săli mari), apoi laboratoarele (săli specializate), apoi seminarele. Fiecare lecție primește intervalul cu cel mai mic „cost”: fără suprapuneri de profesor, grupă sau sală, sală potrivită ca destinație și capacitate, zile echilibrate, fără ferestre și perechi târzii."/>
+            </StackPanel>
+
+            <Border Style="{StaticResource DialogFooter}" Margin="0,14,0,0">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Content="Anulează" Command="{Binding CancelCommand}" Margin="0,0,8,0" MinWidth="96"/>
+                    <Button Style="{StaticResource Btn.Primary}" ui:Ui.Icon="&#xE945;" Content="Generează" Command="{Binding RunCommand}" IsDefault="True" MinWidth="120"/>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </Border>
+</Window>
