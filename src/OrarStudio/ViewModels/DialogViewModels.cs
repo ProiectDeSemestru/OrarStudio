@@ -207,8 +207,9 @@ public sealed partial class BoardViewModel : ObservableObject, IDisposable
         int week = SemesterCalendar.WeekNumber(s, DateTime.Today);
         if (!SemesterCalendar.InSemester(s, week) || Ro.DayIndex(DateTime.Today) >= TimetableBuilder.Days(AppServices.Store.Data))
         {
-            var demo = SemesterCalendar.MondayOf(s.SemesterStart).AddDays(7 * 4 + Math.Min(2, TimetableBuilder.Days(AppServices.Store.Data) - 1));
-            _simDate = demo;
+            // simulare implicită: o zi lucrătoare din săptămâna a 5-a a semestrului
+            var simDay = SemesterCalendar.MondayOf(s.SemesterStart).AddDays(7 * 4 + Math.Min(2, TimetableBuilder.Days(AppServices.Store.Data) - 1));
+            _simDate = simDay;
         }
         _clock = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
         _clock.Tick += (_, _) => Tick(false);
@@ -272,7 +273,7 @@ public sealed partial class BoardViewModel : ObservableObject, IDisposable
         SlotProgress = slot == null ? 0 : Math.Clamp((now.TimeOfDay - slot.StartTime).TotalMinutes / Math.Max(1, (slot.EndTime - slot.StartTime).TotalMinutes), 0, 1);
         _allRows = state.Rows.Where(r => !OnlyActive || r.Now.Length > 0 || r.Next.Length > 0).ToList();
         IsEmpty = _allRows.Count == 0;
-        Updated = $"Actualizat la {DateTime.Now:HH:mm:ss}" + (Simulate ? " · mod demonstrativ" : "");
+        Updated = $"Actualizat la {DateTime.Now:HH:mm:ss}" + (Simulate ? " · simulare" : "");
         ShowPage();
     }
 

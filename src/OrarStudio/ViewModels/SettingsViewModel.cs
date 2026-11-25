@@ -121,11 +121,4 @@ public sealed partial class SettingsViewModel : PageViewModel
         if (File.Exists(path)) Dialogs.ShowInFolder(path);
         else Dialogs.OpenPath(Path.GetDirectoryName(path) ?? AppPaths.DataDir);
     }
-
-    [RelayCommand]
-    private void OpenSamples()
-    {
-        var dir = AppPaths.SamplesDir;
-        Dialogs.OpenPath(Directory.Exists(dir) ? dir : AppContext.BaseDirectory);
-    }
 }

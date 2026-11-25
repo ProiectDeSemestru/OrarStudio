@@ -221,9 +221,6 @@
                                     <MenuItem Header="Importă sarcina didactică…" InputGestureText="Ctrl+I" Command="{Binding ImportCommand}">
                                         <MenuItem.Icon><TextBlock Text="&#xE8E5;" Style="{StaticResource Icon}" FontSize="13"/></MenuItem.Icon>
                                     </MenuItem>
-                                    <MenuItem Header="Încarcă datele demonstrative" Command="{Binding LoadDemoCommand}">
-                                        <MenuItem.Icon><TextBlock Text="&#xE7BE;" Style="{StaticResource Icon}" FontSize="13"/></MenuItem.Icon>
-                                    </MenuItem>
                                     <Separator/>
                                     <MenuItem Header="Despre Orar Studio" Command="{Binding AboutCommand}">
                                         <MenuItem.Icon><TextBlock Text="&#xE946;" Style="{StaticResource Icon}" FontSize="13"/></MenuItem.Icon>
@@ -250,20 +247,21 @@
 
             <!-- Bara de stare -->
             <Border Grid.Row="2" Background="{DynamicResource Brush.Surface}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="0,1,0,0">
-                <DockPanel Margin="18,0" TextElement.FontSize="12" TextElement.Foreground="{DynamicResource Brush.TextSecondary}">
-                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
-                        <TextBlock Text="{Binding WeekText}" Margin="0,0,18,0"/>
-                        <StackPanel Orientation="Horizontal" Margin="0,0,18,0">
-                            <TextBlock Text="&#xE774;" Style="{StaticResource Icon}" FontSize="11" Margin="0,0,6,0"/>
-                            <TextBlock Text="{Binding Api.Status}"/>
-                        </StackPanel>
-                        <TextBlock Text="{Binding StatsText}"/>
-                    </StackPanel>
-                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <TextBlock Text="&#xE74E;" Style="{StaticResource Icon}" FontSize="11" Margin="0,0,6,0"/>
-                        <TextBlock Text="{Binding SaveStatus}" ToolTip="{Binding FileTooltip}"/>
-                        <TextBlock Text="·" Margin="8,0"/>
-                        <TextBlock Text="{Binding FileLabel}" ToolTip="{Binding FileTooltip}" MaxWidth="260" TextTrimming="CharacterEllipsis"/>
+                <Grid Margin="18,0" TextElement.FontSize="12" TextElement.Foreground="{DynamicResource Brush.TextSecondary}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <!-- stânga: salvarea și fișierul (un nume lung se scurtează cu „…") -->
+                    <DockPanel VerticalAlignment="Center" LastChildFill="True">
+                        <TextBlock DockPanel.Dock="Left" Text="&#xE74E;" Style="{StaticResource Icon}" FontSize="11" Margin="0,0,6,0"/>
+                        <TextBlock DockPanel.Dock="Left" Text="{Binding SaveStatus}" ToolTip="{Binding FileTooltip}" TextTrimming="CharacterEllipsis"/>
+                        <TextBlock DockPanel.Dock="Left" Text="·" Margin="8,0"/>
+                        <TextBlock Text="{Binding FileLabel}" ToolTip="{Binding FileTooltip}" TextTrimming="CharacterEllipsis" HorizontalAlignment="Left"/>
+                    </DockPanel>
+                    <!-- mijloc: conflictele și partea plasată din sarcină -->
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                         <Border Width="1" Height="14" Background="{DynamicResource Brush.Border}" Margin="14,0"/>
                         <Button Style="{StaticResource Btn.Link}" Command="{Binding ShowConflictsCommand}" ToolTip="Mergi la primul conflict din orar">
                             <StackPanel Orientation="Horizontal">
@@ -299,9 +297,18 @@
                         </Button>
                         <Border Width="1" Height="14" Background="{DynamicResource Brush.Border}" Margin="14,0"/>
                         <ProgressBar Width="70" Height="5" Maximum="1" Value="{Binding Coverage, Mode=OneWay}" Margin="0,0,8,0"/>
-                        <TextBlock Text="{Binding CoverageText}"/>
+                        <TextBlock Text="{Binding CoverageText}" Margin="0,0,18,0"/>
                     </StackPanel>
-                </DockPanel>
+                    <!-- dreapta: săptămâna, serverul API, statistica -->
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding WeekText}" Margin="0,0,18,0"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,18,0">
+                            <TextBlock Text="&#xE774;" Style="{StaticResource Icon}" FontSize="11" Margin="0,0,6,0"/>
+                            <TextBlock Text="{Binding Api.Status}"/>
+                        </StackPanel>
+                        <TextBlock Text="{Binding StatsText}"/>
+                    </StackPanel>
+                </Grid>
             </Border>
         </Grid>
 

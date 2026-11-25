@@ -46,6 +46,8 @@ public sealed partial class DashboardViewModel : PageViewModel
     [ObservableProperty] private string _todayText = "";
     [ObservableProperty] private string _greeting = "";
     [ObservableProperty] private bool _hasIssues;
+    /// <summary>Proiect nou, fără sarcină didactică: se afișează „Primii pași".</summary>
+    [ObservableProperty] private bool _isEmpty;
 
     public ObservableCollection<BarItem> DayBars { get; } = new();
     public ObservableCollection<BarItem> RoomBars { get; } = new();
@@ -59,6 +61,7 @@ public sealed partial class DashboardViewModel : PageViewModel
         var lk = Store.Lk;
         var s = d.Settings;
         Lessons = d.Lessons.Count;
+        IsEmpty = d.Activities.Count == 0 && d.Lessons.Count == 0;
         Groups = d.Groups.Count;
         Teachers = d.Teachers.Count;
         Rooms = d.Rooms.Count;

@@ -35,8 +35,6 @@
   <ItemGroup>
     <None Remove="Web\**" />
     <EmbeddedResource Include="Web\**\*.*" LogicalName="Web/%(Filename)%(Extension)" />
-    <EmbeddedResource Include="Samples\*.xlsx" LogicalName="Samples/%(Filename)%(Extension)" />
-    <None Update="Samples\**\*.*" CopyToOutputDirectory="PreserveNewest" />
     <Resource Include="Assets\app.ico" />
     <Resource Include="Assets\logo.png" />
   </ItemGroup>

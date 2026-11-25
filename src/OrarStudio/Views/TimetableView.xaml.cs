@@ -220,6 +220,23 @@ public partial class TimetableView : UserControl
         menu.IsOpen = true;
     }
 
+    // ───────────────────────── Vizualizarea „Toate …" ─────────────────────────
+
+    /// <summary>Antetele (coloanele și perechile) rămân fixe la derularea matricei.</summary>
+    private void MatrixBody_ScrollChanged(object sender, ScrollChangedEventArgs e)
+    {
+        MatrixHeaderScroll.ScrollToHorizontalOffset(e.HorizontalOffset);
+        MatrixLeftScroll.ScrollToVerticalOffset(e.VerticalOffset);
+    }
+
+    /// <summary>Dublu-clic pe antetul unei coloane: se deschide doar acea grupă / acel profesor / auditoriu.</summary>
+    private void EntityHeader_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (e.ClickCount != 2 || sender is not FrameworkElement { Tag: EntityHeaderVM header } || Vm == null) return;
+        e.Handled = true;
+        Vm.OpenEntity(header.Key);
+    }
+
     // ───────────────────────── Meniul unei lecții ─────────────────────────
 
     private ContextMenu BuildLessonMenu(LessonCardVM card)
@@ -261,12 +278,13 @@ public partial class TimetableView : UserControl
 
         menu.Items.Add(new Separator());
         var lesson = card.Model;
-        if (vm.Mode != ScheduleViewMode.Group)
+        // în „Toate …" se poate deschide și orarul unei singure coloane de același tip
+        if (vm.Mode != ScheduleViewMode.Group || vm.IsMatrix)
             foreach (var g in lesson.Groups.Select(Audience.BaseCode).Distinct(StringComparer.OrdinalIgnoreCase).Take(4))
                 menu.Items.Add(Item($"Deschide orarul grupei {g}", "", () => vm.OpenRelated(ScheduleViewMode.Group, g)));
-        if (vm.Mode != ScheduleViewMode.Teacher && lesson.TeacherId is Guid tid)
+        if ((vm.Mode != ScheduleViewMode.Teacher || vm.IsMatrix) && lesson.TeacherId is Guid tid)
             menu.Items.Add(Item($"Deschide orarul profesorului {store.Lk.TeacherName(tid)}", "", () => vm.OpenRelated(ScheduleViewMode.Teacher, tid.ToString())));
-        if (vm.Mode != ScheduleViewMode.Room && lesson.RoomId is Guid rid)
+        if ((vm.Mode != ScheduleViewMode.Room || vm.IsMatrix) && lesson.RoomId is Guid rid)
             menu.Items.Add(Item($"Deschide orarul auditoriului {store.Lk.RoomName(rid)}", "", () => vm.OpenRelated(ScheduleViewMode.Room, rid.ToString())));
         if (lesson.ActivityId is Guid aid && AppServices.Main is { } main)
             menu.Items.Add(Item("Arată în sarcina didactică", "", () => main.Navigate(main.Activities, aid)));

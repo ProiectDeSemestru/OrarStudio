@@ -1,31 +1,22 @@
-using System.Reflection;
 using OrarStudio.Import;
 
-namespace OrarStudio.Services;
+namespace OrarStudio.Tests;
 
 /// <summary>
-/// Date demonstrative: auditoriile facultății + sarcina didactică importată din fișierele-exemplu
-/// (DI_sem_1/3/5 … .xlsx) + un orar generat automat.
+/// Proiect de test: sarcina didactică reală a Departamentului Informatică (fișierele din TestData,
+/// semestrele I, III, V) + auditoriile blocului IV + (opțional) orarul generat automat.
 /// </summary>
-public static class SampleData
+internal static class SampleProject
 {
+    public static string DataDir => Path.Combine(AppContext.BaseDirectory, "TestData");
+
     public static Dataset Create(bool schedule = true)
     {
         var d = new Dataset();
-        foreach (var r in DemoRooms()) d.Rooms.Add(r);
+        foreach (var r in Rooms()) d.Rooms.Add(r);
 
-        var preview = new ImportPreview();
-        var asm = Assembly.GetExecutingAssembly();
-        foreach (var name in asm.GetManifestResourceNames().Where(n => n.StartsWith("Samples/") && n.EndsWith(".xlsx")).OrderBy(n => n))
-        {
-            using var s = asm.GetManifestResourceStream(name);
-            if (s == null) continue;
-            using var ms = new MemoryStream();
-            s.CopyTo(ms);
-            ms.Position = 0;
-            try { LoadImporter.ParseStream(ms, name["Samples/".Length..], preview, d.Settings); }
-            catch (Exception ex) { Log.Error(ex, "Date demo: " + name); }
-        }
+        var files = Directory.GetFiles(DataDir, "*.xlsx").OrderBy(f => f, StringComparer.Ordinal).ToList();
+        var preview = LoadImporter.Parse(files, d.Settings);
         LoadImporter.Apply(preview, d, replaceLoad: false, applyWishes: false, updateSettings: true);
 
         if (schedule)
@@ -36,7 +27,7 @@ public static class SampleData
         return d;
     }
 
-    public static IEnumerable<Room> DemoRooms()
+    public static IEnumerable<Room> Rooms()
     {
         Room R(string name, int floor, int cap, RoomKind kind, bool projector, int pcs, string notes = "")
         {

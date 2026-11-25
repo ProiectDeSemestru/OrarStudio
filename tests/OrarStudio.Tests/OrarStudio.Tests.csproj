@@ -22,6 +22,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- sarcina didactică reală a departamentelor, folosită pentru testarea importului și a generatorului -->
+    <None Include="TestData\**\*.*" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Using Include="Xunit" />
     <Using Include="System.IO" />
     <Using Include="OrarStudio.Models" />

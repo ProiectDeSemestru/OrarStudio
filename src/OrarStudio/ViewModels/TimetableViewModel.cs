@@ -16,9 +16,35 @@ public abstract class GridItemVM : ObservableObject
 {
     public int Row { get; init; }
     public int Col { get; init; }
+    public int RowSpan { get; init; } = 1;
+    public int ColSpan { get; init; } = 1;
 }
 
 public sealed class CornerVM : GridItemVM { }
+
+/// <summary>Antetul unei coloane în vizualizarea „Toate …": o grupă, un profesor sau un auditoriu.</summary>
+public sealed class EntityHeaderVM : GridItemVM
+{
+    public string Key { get; init; } = "";
+    public string Label { get; init; } = "";
+    public string Detail { get; init; } = "";
+    public string Tooltip { get; init; } = "";
+}
+
+/// <summary>Eticheta (verticală) a zilei în vizualizarea „Toate …".</summary>
+public sealed class MatrixDayVM : GridItemVM
+{
+    public string Name { get; init; } = "";
+    public bool IsToday { get; init; }
+}
+
+/// <summary>Eticheta perechii în vizualizarea „Toate …".</summary>
+public sealed class MatrixSlotVM : GridItemVM
+{
+    public string Roman { get; init; } = "";
+    public string Time { get; init; } = "";
+    public bool LastOfDay { get; init; }
+}
 
 public sealed partial class DayHeaderVM : GridItemVM
 {
@@ -50,6 +76,10 @@ public sealed partial class CellVM : GridItemVM
 {
     public int Day { get; init; }
     public int Slot { get; init; }
+    /// <summary>În vizualizarea „Toate …": grupa, profesorul sau auditoriul coloanei (altfel null).</summary>
+    public object? Entity { get; init; }
+    /// <summary>Celulă mică, din vizualizarea „Toate …".</summary>
+    public bool Compact { get; init; }
     public ObservableCollection<CellColumnVM> Columns { get; } = new();
     [ObservableProperty] private DropState _dropState;
     [ObservableProperty] private bool _isDropTarget;
@@ -73,7 +103,7 @@ public sealed partial class CellVM : GridItemVM
             Columns.Add(new CellColumnVM { Odd = i < odd.Count ? odd[i] : null, Even = i < even.Count ? even[i] : null, IsSplit = true });
         foreach (var c in Columns)
         {
-            if (c.Full != null) c.Full.Compact = Columns.Count > 1;
+            if (c.Full != null) c.Full.Compact = Compact || Columns.Count > 1;
             if (c.Odd != null) c.Odd.Compact = true;
             if (c.Even != null) c.Even.Compact = true;
         }
@@ -105,6 +135,8 @@ public sealed partial class LessonCardVM : ObservableObject
     public bool HasError => Severity == IssueSeverity.Error;
     public bool HasWarning => Severity == IssueSeverity.Warning;
     public bool ColorBySubject { get; init; }
+    /// <summary>Cartonaș mic (vizualizarea „Toate …"): titlu scurt + un rând, fără etichete.</summary>
+    public bool Mini { get; init; }
 
     [ObservableProperty] private bool _isSelected;
     [ObservableProperty] private bool _compact;
@@ -144,23 +176,39 @@ public sealed class IssueVM
 public sealed partial class TimetableViewModel : PageViewModel
 {
     private readonly Dictionary<(int Day, int Slot), CellVM> _cells = new();
+    private readonly List<CellVM> _matrixCells = new();
     private string _structureKey = "";
+    private string _matrixKey = "";
     private bool _suppress;
     private Guid? _selectedId;
+
+    private const string AllKey = "*";
+    private const int MatrixColWidth = 156, MatrixRowHeight = 72;
 
     public override string Title => "Editor orar";
     public override string Icon => "";
 
     public override string Subtitle => SelectedEntity == null
         ? "Selectați o grupă, un profesor sau un auditoriu"
-        : $"{ModeNoun} {SelectedEntity.Label} · {Summary}";
+        : SelectedEntity.IsAll
+            ? $"{SelectedEntity.Label} · {Summary}"
+            : $"{ModeNoun} {SelectedEntity.Label} · {Summary}";
 
     private string ModeNoun => Mode switch
     {
         ScheduleViewMode.Group => "Grupa",
         ScheduleViewMode.Teacher => "Profesorul",
-        _ => "",
+        _ => "Auditoriul",
     };
+
+    /// <summary>Este aleasă opțiunea „Toate grupele / Toți profesorii / Toate auditoriile".</summary>
+    private bool IsAll => SelectedEntity?.IsAll == true;
+
+    /// <summary>Celulele grilei afișate acum (o entitate sau vizualizarea „Toate …").</summary>
+    private IEnumerable<CellVM> AllCells => IsMatrix ? _matrixCells : _cells.Values;
+
+    /// <summary>Entitatea căreia îi aparține celula: coloana în „Toate …", altfel entitatea selectată.</summary>
+    private object? EntityOf(CellVM cell) => cell.Entity ?? SelectedEntity?.Model;
 
     public IReadOnlyList<Option<ScheduleViewMode>> Modes { get; } = new[]
     {
@@ -172,6 +220,14 @@ public sealed partial class TimetableViewModel : PageViewModel
     [ObservableProperty] private ScheduleViewMode _mode = ScheduleViewMode.Group;
     public ObservableCollection<EntityOption> Entities { get; } = new();
     [ObservableProperty] private EntityOption? _selectedEntity;
+
+    // vizualizarea „Toate …": rânduri = zi × pereche, coloane = grupe / profesori / auditorii
+    [ObservableProperty] private bool _isMatrix;
+    [ObservableProperty] private IReadOnlyList<GridItemVM> _matrixHeaderItems = Array.Empty<GridItemVM>();
+    [ObservableProperty] private IReadOnlyList<GridItemVM> _matrixLeftItems = Array.Empty<GridItemVM>();
+    [ObservableProperty] private IReadOnlyList<GridItemVM> _matrixCellItems = Array.Empty<GridItemVM>();
+    [ObservableProperty] private string _matrixColumnSpec = "";
+    [ObservableProperty] private string _matrixRowSpec = "";
 
     public ObservableCollection<GridItemVM> GridItems { get; } = new();
     [ObservableProperty] private string _columnSpec = "";
@@ -249,7 +305,20 @@ public sealed partial class TimetableViewModel : PageViewModel
                     Entities.Add(new EntityOption { Key = r.Id.ToString(), Label = r.Name, Detail = $"{r.KindLabel} · {r.Capacity} locuri", Model = r });
                 break;
         }
-        SelectedEntity = Entities.FirstOrDefault(e => e.Key == keepKey) ?? Entities.FirstOrDefault();
+        int count = Entities.Count;
+        if (count > 0)
+        {
+            var (label, detail) = Mode switch
+            {
+                ScheduleViewMode.Group => ("Toate grupele", Ro.Count(count, "grupă", "grupe")),
+                ScheduleViewMode.Teacher => ("Toți profesorii", Ro.Count(count, "profesor", "profesori")),
+                _ => ("Toate auditoriile", Ro.Count(count, "auditoriu", "auditorii")),
+            };
+            Entities.Insert(0, new EntityOption { Key = AllKey, Label = label, Detail = detail, IsAll = true });
+        }
+        SelectedEntity = Entities.FirstOrDefault(e => e.Key == keepKey)
+                         ?? Entities.FirstOrDefault(e => !e.IsAll)
+                         ?? Entities.FirstOrDefault();
         _suppress = false;
         BuildContent();
         OnPropertyChanged(nameof(Subtitle));
@@ -257,10 +326,107 @@ public sealed partial class TimetableViewModel : PageViewModel
 
     private void BuildContent()
     {
-        EnsureStructure();
-        FillCells();
+        IsMatrix = IsAll;
+        if (IsMatrix)
+        {
+            EnsureMatrix();
+            FillMatrix();
+        }
+        else
+        {
+            EnsureStructure();
+            FillCells();
+        }
         BuildPending();
         BuildIssues();
+    }
+
+    /// <summary>Deschide o singură grupă / un profesor / un auditoriu (dublu-clic pe antetul coloanei).</summary>
+    public void OpenEntity(string key)
+    {
+        var option = Entities.FirstOrDefault(e => e.Key == key);
+        if (option != null) SelectedEntity = option;
+    }
+
+    private static bool Concerns(Lesson l, object? entity) => entity switch
+    {
+        StudentGroup g => Audience.Concerns(l.Groups, g.Code),
+        Teacher t => l.TeacherId == t.Id,
+        Room r => l.RoomId == r.Id,
+        _ => false,
+    };
+
+    private void EnsureMatrix()
+    {
+        var d = Store.Data;
+        int days = TimetableBuilder.Days(d);
+        var slots = d.Settings.TimeSlots.OrderBy(x => x.Number).ToList();
+        var columns = Entities.Where(e => !e.IsAll).ToList();
+        var key = $"{Mode}|{days}|{string.Join(",", slots.Select(x => $"{x.Number}:{x.Start}-{x.End}"))}|" +
+                  string.Join(",", columns.Select(c => $"{c.Key}={c.Label}={c.Detail}"));
+        if (key == _matrixKey) return;
+        _matrixKey = key;
+
+        var headers = new List<GridItemVM>();
+        for (int i = 0; i < columns.Count; i++)
+        {
+            var c = columns[i];
+            headers.Add(new EntityHeaderVM
+            {
+                Row = 0, Col = i, Key = c.Key, Label = c.Label, Detail = c.Detail,
+                Tooltip = $"{c.Label} — {c.Detail}\nDublu-clic: deschide doar această coloană",
+            });
+        }
+
+        int today = Ro.DayIndex(DateTime.Today);
+        var left = new List<GridItemVM>();
+        var cells = new List<GridItemVM>();
+        _matrixCells.Clear();
+        int row = 0;
+        for (int day = 0; day < days; day++)
+        {
+            left.Add(new MatrixDayVM { Row = row, Col = 0, RowSpan = slots.Count, Name = Ro.Day(day).ToUpperInvariant(), IsToday = day == today });
+            for (int si = 0; si < slots.Count; si++)
+            {
+                var slot = slots[si];
+                left.Add(new MatrixSlotVM { Row = row, Col = 1, Roman = Ro.Roman(slot.Number), Time = slot.Label, LastOfDay = si == slots.Count - 1 });
+                for (int c = 0; c < columns.Count; c++)
+                {
+                    var cell = new CellVM { Row = row, Col = c, Day = day, Slot = slot.Number, Entity = columns[c].Model, IsToday = day == today, Compact = true };
+                    _matrixCells.Add(cell);
+                    cells.Add(cell);
+                }
+                row++;
+            }
+        }
+
+        MatrixColumnSpec = string.Join(" ", Enumerable.Repeat(MatrixColWidth.ToString(System.Globalization.CultureInfo.InvariantCulture), columns.Count));
+        MatrixRowSpec = string.Join(" ", Enumerable.Repeat(MatrixRowHeight.ToString(System.Globalization.CultureInfo.InvariantCulture), row));
+        MatrixHeaderItems = headers;
+        MatrixLeftItems = left;
+        MatrixCellItems = cells;
+    }
+
+    private void FillMatrix()
+    {
+        var d = Store.Data;
+        var byCell = d.Lessons.GroupBy(l => (l.Day, l.Slot)).ToDictionary(g => g.Key, g => g.ToList());
+        foreach (var cell in _matrixCells)
+        {
+            var cards = byCell.TryGetValue((cell.Day, cell.Slot), out var here)
+                ? here.Where(l => Concerns(l, cell.Entity)).Select(l => MakeCard(l, cell.Entity, mini: true)).ToList()
+                : new List<LessonCardVM>();
+            cell.SetLessons(cards);
+            cell.IsUnavailable = cell.Entity is Teacher t && t.IsUnavailable(cell.Day, cell.Slot);
+        }
+
+        int hours = d.Lessons.Sum(l => l.Hours);
+        int errors = Store.Report.ConflictingLessons;
+        Summary = $"{Ro.Count(d.Lessons.Count, "lecție", "lecții")} · {hours} ore/săpt." +
+                  (errors > 0 ? $" · {Ro.Count(errors, "lecție", "lecții")} în conflict" : " · fără conflicte");
+
+        SelectedLesson = null;
+        if (_selectedId is Guid id) SelectLessonById(id);
     }
 
     private void EnsureStructure()
@@ -300,6 +466,7 @@ public sealed partial class TimetableViewModel : PageViewModel
     private List<Lesson> EntityLessons()
     {
         var d = Store.Data;
+        if (IsAll) return d.Lessons.ToList();
         return SelectedEntity?.Model switch
         {
             StudentGroup g => d.Lessons.Where(l => Audience.Concerns(l.Groups, g.Code)).ToList(),
@@ -315,7 +482,7 @@ public sealed partial class TimetableViewModel : PageViewModel
         var teacher = SelectedEntity?.Model as Teacher;
         foreach (var cell in _cells.Values)
         {
-            var cards = lessons.Where(l => l.Day == cell.Day && l.Slot == cell.Slot).Select(MakeCard).ToList();
+            var cards = lessons.Where(l => l.Day == cell.Day && l.Slot == cell.Slot).Select(l => MakeCard(l)).ToList();
             cell.SetLessons(cards);
             cell.IsUnavailable = teacher?.IsUnavailable(cell.Day, cell.Slot) == true;
         }
@@ -335,14 +502,17 @@ public sealed partial class TimetableViewModel : PageViewModel
         if (_selectedId is Guid id) SelectLessonById(id);
     }
 
-    private LessonCardVM MakeCard(Lesson l)
+    /// <param name="entity">Entitatea în contextul căreia se afișează lecția (implicit: cea selectată).</param>
+    /// <param name="mini">Cartonaș mic pentru vizualizarea „Toate …".</param>
+    private LessonCardVM MakeCard(Lesson l, object? entity = null, bool mini = false)
     {
         var lk = Store.Lk;
         var subject = lk.Subject(l.SubjectId);
         var teacher = lk.Teacher(l.TeacherId);
         var room = lk.Room(l.RoomId);
+        entity ??= SelectedEntity?.Model;
         string line2, badge = "";
-        switch (SelectedEntity?.Model)
+        switch (entity)
         {
             case StudentGroup g:
                 line2 = teacher?.Name ?? "fără profesor";
@@ -376,9 +546,21 @@ public sealed partial class TimetableViewModel : PageViewModel
         foreach (var i in issues) tip.Append(i.Severity == IssueSeverity.Error ? "⛔ " : "⚠ ").AppendLine(i.Message);
         tip.Append("Dublu-clic: editare · trageți pentru a muta (Ctrl = copiere) · clic dreapta: meniu");
 
+        if (mini)
+        {
+            var parts = entity switch
+            {
+                StudentGroup => new[] { room?.Name ?? "fără sală", badge, teacher?.Name ?? "" },
+                Teacher => new[] { room?.Name ?? "fără sală", Audience.Format(l.Groups) },
+                _ => new[] { Audience.Format(l.Groups), teacher?.Name ?? "" },
+            };
+            line2 = string.Join(" · ", parts.Where(p => !string.IsNullOrWhiteSpace(p)));
+        }
+
         return new LessonCardVM(l)
         {
-            Title = subject?.Name ?? "(disciplină ștearsă)",
+            Title = mini ? $"{subject?.Short ?? "?"} ({Ro.TypeShort(l.Type)})" : subject?.Name ?? "(disciplină ștearsă)",
+            Mini = mini,
             ShortTitle = subject?.Short ?? "?",
             Line2 = line2,
             Room = room?.Name ?? "—",
@@ -396,7 +578,7 @@ public sealed partial class TimetableViewModel : PageViewModel
         Pending.Clear();
         var d = Store.Data;
         var lk = Store.Lk;
-        IEnumerable<TeachingActivity> q = SelectedEntity?.Model switch
+        IEnumerable<TeachingActivity> q = IsAll ? d.Activities : SelectedEntity?.Model switch
         {
             StudentGroup g => d.Activities.Where(a => Audience.Concerns(a.Groups, g.Code)),
             Teacher t => d.Activities.Where(a => a.TeacherId == t.Id),
@@ -460,15 +642,15 @@ public sealed partial class TimetableViewModel : PageViewModel
 
     public void Select(LessonCardVM? card)
     {
-        foreach (var c in _cells.Values.SelectMany(x => x.Cards)) c.IsSelected = false;
-        if (card != null) card.IsSelected = true;
+        // o lecție pe serie apare în mai multe coloane (Toate grupele) — se evidențiază peste tot
+        foreach (var c in AllCells.SelectMany(x => x.Cards)) c.IsSelected = card != null && c.Id == card.Id;
         SelectedLesson = card;
         _selectedId = card?.Id;
     }
 
     private void SelectLessonById(Guid id)
     {
-        var card = _cells.Values.SelectMany(c => c.Cards).FirstOrDefault(c => c.Id == id);
+        var card = AllCells.SelectMany(c => c.Cards).FirstOrDefault(c => c.Id == id);
         Select(card);
     }
 
@@ -526,15 +708,33 @@ public sealed partial class TimetableViewModel : PageViewModel
         }
     }
 
+    /// <summary>
+    /// În vizualizarea „Toate …" o lecție rămâne în coloana ei: la grupe — una dintre grupele lecției,
+    /// la profesori — profesorul lecției; la auditorii se poate alege orice coloană (lecția primește acea sală).
+    /// </summary>
+    private static bool FitsColumn(Guid? teacher, List<string> groups, CellVM cell) => cell.Entity switch
+    {
+        StudentGroup g => Audience.Concerns(groups, g.Code),
+        Teacher t => teacher == t.Id,
+        _ => true,
+    };
+
     public void BeginDrag(object payload)
     {
         IsDragging = true;
         var info = Describe(payload);
         var d = Store.Data;
-        var room = SelectedEntity?.Model as Room;
-        foreach (var cell in _cells.Values)
+        var quick = new Dictionary<(int Day, int Slot), IssueSeverity?>();
+        foreach (var cell in AllCells)
         {
-            var sev = ConflictService.QuickCheck(d, Store.Lk, info.Teacher, info.Groups, cell.Day, cell.Slot, info.Week, info.Ignore);
+            if (!FitsColumn(info.Teacher, info.Groups, cell))
+            {
+                cell.DropState = DropState.Bad;
+                continue;
+            }
+            if (!quick.TryGetValue((cell.Day, cell.Slot), out var sev))
+                quick[(cell.Day, cell.Slot)] = sev = ConflictService.QuickCheck(d, Store.Lk, info.Teacher, info.Groups, cell.Day, cell.Slot, info.Week, info.Ignore);
+            var room = EntityOf(cell) as Room;
             DropState state;
             if (sev == IssueSeverity.Error) state = DropState.Bad;
             else if (room != null)
@@ -555,16 +755,23 @@ public sealed partial class TimetableViewModel : PageViewModel
             }
             cell.DropState = state;
         }
-        DragHint = payload is LessonCardVM
-            ? "Verde = liber · galben = fără sală potrivită / doleanță · roșu = conflict. Ctrl = copiere. Trageți în lista din stânga pentru a scoate din orar."
-            : "Verde = liber · galben = fără sală potrivită / doleanță · roșu = profesorul sau grupa sunt ocupați.";
+        DragHint = IsMatrix
+            ? Mode switch
+            {
+                ScheduleViewMode.Group => "Mutați în coloana uneia dintre grupele lecției · verde = liber · galben = fără sală potrivită / doleanță · roșu = ocupat sau altă grupă.",
+                ScheduleViewMode.Teacher => "Mutați în coloana aceluiași profesor · verde = liber · galben = fără sală potrivită / doleanță · roșu = ocupat sau alt profesor.",
+                _ => "Eliberați în coloana auditoriului dorit — lecția primește acea sală · verde = liber · galben = sală nepotrivită / doleanță · roșu = ocupat.",
+            }
+            : payload is LessonCardVM
+                ? "Verde = liber · galben = fără sală potrivită / doleanță · roșu = conflict. Ctrl = copiere. Trageți în lista din stânga pentru a scoate din orar."
+                : "Verde = liber · galben = fără sală potrivită / doleanță · roșu = profesorul sau grupa sunt ocupați.";
     }
 
     public void EndDrag()
     {
         IsDragging = false;
         DragHint = "";
-        foreach (var cell in _cells.Values)
+        foreach (var cell in AllCells)
         {
             cell.DropState = DropState.None;
             cell.IsDropTarget = false;
@@ -573,21 +780,31 @@ public sealed partial class TimetableViewModel : PageViewModel
 
     public void HoverCell(CellVM? target)
     {
-        foreach (var cell in _cells.Values) cell.IsDropTarget = cell == target;
+        foreach (var cell in AllCells) cell.IsDropTarget = cell == target;
     }
 
     public void Drop(object payload, CellVM cell, bool copy)
     {
+        var info = Describe(payload);
+        if (!FitsColumn(info.Teacher, info.Groups, cell))
+        {
+            Toasts.Show(Mode == ScheduleViewMode.Teacher
+                    ? "Lecția se poate muta doar în coloana profesorului ei."
+                    : "Lecția se poate muta doar în coloanele grupelor ei.",
+                ToastKind.Warning, seconds: 4);
+            return;
+        }
+        var room = cell.Entity as Room;
         switch (payload)
         {
             case ActivityItemVM a:
-                PlaceActivity(a.Model, cell.Day, cell.Slot);
+                PlaceActivity(a.Model, cell.Day, cell.Slot, room);
                 break;
             case LessonCardVM c when copy:
-                CopyLesson(c.Model, cell.Day, cell.Slot);
+                CopyLesson(c.Model, cell.Day, cell.Slot, room);
                 break;
             case LessonCardVM c:
-                MoveLesson(c.Model.Id, cell.Day, cell.Slot);
+                MoveLesson(c.Model.Id, cell.Day, cell.Slot, room);
                 break;
         }
     }
@@ -600,7 +817,8 @@ public sealed partial class TimetableViewModel : PageViewModel
     private Guid? PreferredRoomFor(TeachingActivity a) =>
         Store.Data.Lessons.Where(l => l.ActivityId == a.Id && l.RoomId != null).Select(l => l.RoomId).FirstOrDefault();
 
-    public void PlaceActivity(TeachingActivity a, int day, int slot)
+    /// <param name="targetRoom">Sala impusă (coloana din „Toate auditoriile"); altfel se alege automat.</param>
+    public void PlaceActivity(TeachingActivity a, int day, int slot, Room? targetRoom = null)
     {
         var lk = Store.Lk;
         int remaining = a.HoursPerWeek - lk.PlacedHoursOf(a.Id);
@@ -616,8 +834,9 @@ public sealed partial class TimetableViewModel : PageViewModel
             ActivityId = a.Id, SubjectId = a.SubjectId, TeacherId = a.TeacherId, Type = a.Type,
             Groups = a.Groups.ToList(), Day = day, Slot = slot, Week = week,
         };
-        lesson.RoomId = SelectedEntity?.Model is Room r
-            ? r.Id
+        var fixedRoom = targetRoom ?? (SelectedEntity?.Model as Room);
+        lesson.RoomId = fixedRoom != null
+            ? fixedRoom.Id
             : AutoScheduler.SuggestRoom(Store.Data, lk, lesson, PreferredRoomFor(a))?.Id;
 
         var subject = lk.SubjectName(a.SubjectId);
@@ -634,10 +853,14 @@ public sealed partial class TimetableViewModel : PageViewModel
             Toasts.Show($"„{subject}” → {where}, aud. {lk.RoomName(lesson.RoomId)}", ToastKind.Success, "Anulează", () => Store.Undo(), 4);
     }
 
-    public void MoveLesson(Guid lessonId, int day, int slot)
+    /// <param name="targetRoom">Sala impusă (coloana din „Toate auditoriile"); altfel se păstrează sau se alege alta liberă.</param>
+    public void MoveLesson(Guid lessonId, int day, int slot, Room? targetRoom = null)
     {
         var lesson = Store.Data.Lessons.FirstOrDefault(l => l.Id == lessonId);
-        if (lesson == null || (lesson.Day == day && lesson.Slot == slot)) return;
+        if (lesson == null) return;
+        bool sameTime = lesson.Day == day && lesson.Slot == slot;
+        if (sameTime && (targetRoom == null || lesson.RoomId == targetRoom.Id)) return;
+        var fixedRoom = targetRoom ?? (SelectedEntity?.Model as Room);
         string? roomChange = null;
         _selectedId = lessonId;
         Store.Mutate($"Mutare „{Store.Lk.SubjectShort(lesson.SubjectId)}”", d =>
@@ -645,9 +868,9 @@ public sealed partial class TimetableViewModel : PageViewModel
             var l = d.Lessons.First(x => x.Id == lessonId);
             l.Day = day;
             l.Slot = slot;
-            if (SelectedEntity?.Model is Room r)
+            if (fixedRoom != null)
             {
-                l.RoomId = r.Id;
+                l.RoomId = fixedRoom.Id;
             }
             else if (l.RoomId != null)
             {
@@ -670,19 +893,22 @@ public sealed partial class TimetableViewModel : PageViewModel
             }
         });
         var errors = Store.Report.ByLesson[lessonId].Where(i => i.Severity == IssueSeverity.Error).ToList();
-        var msg = $"Mutată în {Ro.Day(day).ToLowerInvariant()}, perechea {Ro.Roman(slot)}" + (roomChange != null ? $" ({roomChange})" : "");
+        var msg = (sameTime ? "Mutată" : $"Mutată în {Ro.Day(day).ToLowerInvariant()}, perechea {Ro.Roman(slot)}") +
+                  (targetRoom != null ? (sameTime ? $" în auditoriul {targetRoom.Name}" : $", auditoriul {targetRoom.Name}") : "") +
+                  (roomChange != null ? $" ({roomChange})" : "");
         if (errors.Count > 0) Toasts.Show(msg + ". Atenție: " + errors[0].Message, ToastKind.Warning, "Anulează", () => Store.Undo());
         else Toasts.Show(msg, ToastKind.Success, "Anulează", () => Store.Undo(), 3);
     }
 
-    public void CopyLesson(Lesson source, int day, int slot)
+    public void CopyLesson(Lesson source, int day, int slot, Room? targetRoom = null)
     {
         var copy = Json.Clone(source);
         copy.Id = Guid.NewGuid();
         copy.Day = day;
         copy.Slot = slot;
         copy.Locked = false;
-        if (SelectedEntity?.Model is Room r) copy.RoomId = r.Id;
+        var fixedRoom = targetRoom ?? (SelectedEntity?.Model as Room);
+        if (fixedRoom != null) copy.RoomId = fixedRoom.Id;
         else copy.RoomId = AutoScheduler.SuggestRoom(Store.Data, Store.Lk, copy, source.RoomId)?.Id;
         _selectedId = copy.Id;
         Store.Mutate($"Copiere „{Store.Lk.SubjectShort(source.SubjectId)}”", d => d.Lessons.Add(copy));
@@ -713,7 +939,7 @@ public sealed partial class TimetableViewModel : PageViewModel
 
     public void NewLessonAt(CellVM cell)
     {
-        var vm = LessonEditorViewModel.ForNew(cell.Day, cell.Slot, Mode, SelectedEntity?.Model);
+        var vm = LessonEditorViewModel.ForNew(cell.Day, cell.Slot, Mode, EntityOf(cell));
         Dialogs.ShowModal(new LessonEditorWindow { DataContext = vm });
         if (vm.SavedLessonId is Guid id)
         {
@@ -767,7 +993,7 @@ public sealed partial class TimetableViewModel : PageViewModel
 
     public void ToggleUnavailable(CellVM cell)
     {
-        if (SelectedEntity?.Model is not Teacher t) return;
+        if (EntityOf(cell) is not Teacher t) return;
         var key = new SlotKey(cell.Day, cell.Slot);
         bool now = t.Unavailable.Contains(key);
         Store.Mutate(now ? "Eliminare doleanță" : "Adăugare doleanță", d =>
@@ -836,17 +1062,24 @@ public sealed partial class TimetableViewModel : PageViewModel
         if (SelectedEntity == null) return;
         var d = Store.Data;
         var lk = Store.Lk;
-        EntityTimetable table = SelectedEntity.Model switch
+        EntityTimetable Table(object? model) => model switch
         {
             StudentGroup g => TimetableBuilder.ForGroup(d, lk, g),
             Teacher t => TimetableBuilder.ForTeacher(d, lk, t),
             Room r => TimetableBuilder.ForRoom(d, lk, r),
             _ => throw new InvalidOperationException(),
         };
-        var path = Dialogs.SaveFile("Document PDF (*.pdf)|*.pdf", $"Orar {TimetableBuilder.SafeFileName(table.FileKey)}.pdf", "Exportă orarul în PDF");
+        // „Toate …" → un singur PDF cu orarul fiecărei grupe / fiecărui profesor / auditoriu
+        var tables = IsAll
+            ? Entities.Where(e => !e.IsAll).Select(e => Table(e.Model)).ToList()
+            : new List<EntityTimetable> { Table(SelectedEntity.Model) };
+        if (tables.Count == 0) return;
+        var title = IsAll ? SelectedEntity.Label : tables[0].Title;
+        var fileName = IsAll ? $"Orar - {SelectedEntity.Label}.pdf" : $"Orar {TimetableBuilder.SafeFileName(tables[0].FileKey)}.pdf";
+        var path = Dialogs.SaveFile("Document PDF (*.pdf)|*.pdf", fileName, "Exportă orarul în PDF");
         if (path == null) return;
         var copy = Json.Clone(d);
-        await AppServices.Main!.RunBusy("Se generează PDF…", () => Task.Run(() => File.WriteAllBytes(path, PdfExporter.Timetables(copy, new[] { table }, table.Title))));
+        await AppServices.Main!.RunBusy("Se generează PDF…", () => Task.Run(() => File.WriteAllBytes(path, PdfExporter.Timetables(copy, tables, title))));
         Toasts.Show($"PDF salvat: {Path.GetFileName(path)}", ToastKind.Success, "Deschide", () => Dialogs.OpenPath(path));
     }
 

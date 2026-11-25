@@ -81,6 +81,8 @@ public sealed class EntityOption
     public string Label { get; init; } = "";
     public string Detail { get; init; } = "";
     public object? Model { get; init; }
+    /// <summary>Opțiunea „Toate grupele / Toți profesorii / Toate auditoriile" (vizualizare de ansamblu).</summary>
+    public bool IsAll { get; init; }
     public override string ToString() => Label;
 }
 

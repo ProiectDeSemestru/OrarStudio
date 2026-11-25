@@ -43,7 +43,6 @@ public static class AppPaths
     public static string WorkspaceFile => Path.Combine(DataDir, "orar-curent.orar");
     public static string SettingsFile => Path.Combine(DataDir, "setari.json");
     public static string LogFile => Path.Combine(DataDir, "jurnal.log");
-    public static string SamplesDir => Path.Combine(AppContext.BaseDirectory, "Samples");
 
     public static string DocumentsDir
     {

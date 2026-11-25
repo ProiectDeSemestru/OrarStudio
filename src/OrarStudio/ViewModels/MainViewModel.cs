@@ -156,7 +156,7 @@ public sealed partial class MainViewModel : ObservableObject
         FileTooltip = path;
         SaveStatus = Store.LastError != null
             ? "⚠ Eroare la salvare: " + Store.LastError
-            : Store.LastSaved is DateTime t ? $"Salvat automat la {t:HH:mm:ss}" : "Toate modificările se salvează automat";
+            : Store.LastSaved is DateTime t ? $"Salvat automat la {t:HH:mm:ss}" : "Salvare automată";
     }
 
     /// <summary>Rulează o operațiune lungă afișând indicatorul de încărcare.</summary>
@@ -250,21 +250,6 @@ public sealed partial class MainViewModel : ObservableObject
         RememberFile(path);
         Navigate(Activities);
         Toasts.Show("Proiect nou creat. Importați sarcina didactică pentru a începe.", ToastKind.Success, "Importă", () => ImportCommand.Execute(null), 8);
-    }
-
-    [RelayCommand]
-    private async Task LoadDemo()
-    {
-        if (!Dialogs.Confirm("Date demonstrative",
-                "Se încarcă datele demonstrative: auditoriile facultății + sarcina didactică din fișierele-exemplu (DI, semestrele I, III, V) + un orar generat automat.\n\nDatele curente vor fi înlocuite (puteți salva mai întâi proiectul cu „Salvează ca…”).",
-                "Încarcă datele demo"))
-            return;
-        Dataset? demo = null;
-        await RunBusy("Se pregătesc datele demonstrative…", async () => demo = await Task.Run(() => SampleData.Create()));
-        if (demo == null) return;
-        Store.Load(demo, Store.FilePath, saveNow: true);
-        Navigate(Dashboard);
-        Toasts.Show("Datele demonstrative au fost încărcate.", ToastKind.Success);
     }
 
     [RelayCommand]

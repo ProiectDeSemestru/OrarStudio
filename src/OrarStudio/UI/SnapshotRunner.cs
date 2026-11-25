@@ -10,17 +10,22 @@ using OrarStudio.Views;
 namespace OrarStudio.UI;
 
 /// <summary>
-/// Mod de diagnostic (<c>OrarStudio.exe --snapshot &lt;dosar&gt;</c>): parcurge toate paginile și ferestrele,
-/// le salvează ca imagini PNG și verifică serverul API. Util pentru testare automată și documentație.
+/// Mod de diagnostic (<c>OrarStudio.exe proiect.orar --snapshot &lt;dosar&gt; [--import &lt;fișier&gt;]</c>):
+/// parcurge toate paginile și ferestrele pe o copie a proiectului, le salvează ca imagini PNG și verifică
+/// serverul API. Fără proiect, arată stările inițiale (proiect gol). Util pentru testare și documentație.
 /// </summary>
 public static class SnapshotRunner
 {
-    public static async Task RunAsync(MainViewModel main, string dir)
+    public static async Task RunAsync(MainViewModel main, string dir, string? importSample)
     {
         var report = new StringBuilder();
         try
         {
             Directory.CreateDirectory(dir);
+            // capturile se fac în tema luminoasă (tema utilizatorului se restabilește la final, fără a fi salvată)
+            var userTheme = ThemeService.Current;
+            ThemeService.Apply("Light");
+            main.IsDark = false;
             var win = Application.Current.MainWindow!;
             win.WindowState = WindowState.Normal;
             win.Width = 1480;
@@ -82,17 +87,33 @@ public static class SnapshotRunner
                 }
             }
 
-            // import (previzualizare docx)
-            var docx = Directory.Exists(AppPaths.SamplesDir) ? Directory.GetFiles(AppPaths.SamplesDir, "*.docx").FirstOrDefault() : null;
-            if (docx != null)
+            // vizualizarea „Toate grupele / Toți profesorii / Toate auditoriile"
+            foreach (var (mode, name) in new[] { (ScheduleViewMode.Group, "toate-grupele"), (ScheduleViewMode.Teacher, "toti-profesorii"), (ScheduleViewMode.Room, "toate-auditoriile") })
             {
-                var preview = LoadImporter.Parse(new[] { docx }, store.Data.Settings);
+                main.Navigate(main.Timetable, new TimetableTarget(mode, "*"));
+                await Idle(1500);
+                Capture(win, Path.Combine(dir, $"{i++:00}-orar-{name}.png"));
+            }
+            var labCard = main.Timetable.MatrixCellItems.OfType<CellVM>().SelectMany(c => c.Cards).FirstOrDefault(c => c.Type == LessonType.Laborator);
+            if (labCard != null)
+            {
+                main.Timetable.Select(labCard);
+                main.Timetable.BeginDrag(labCard);
+                await Idle(600);
+                Capture(win, Path.Combine(dir, $"{i++:00}-orar-toate-auditoriile-drag.png"));
+                main.Timetable.EndDrag();
+            }
+
+            // import (previzualizare): fișierul dat cu --import
+            if (importSample != null && File.Exists(importSample))
+            {
+                var preview = LoadImporter.Parse(new[] { importSample }, store.Data.Settings);
                 var import = new ImportWindow { DataContext = new ImportViewModel(preview, store.Data) };
                 import.Show();
                 await Idle(900);
                 Capture(import, Path.Combine(dir, $"{i++:00}-dialog-import.png"));
                 import.Close();
-                report.AppendLine($"import docx: {preview.Rows.Count} rânduri, {preview.Messages.Count} mesaje, doleanțe: {preview.SuggestedUnavailable.Count}");
+                report.AppendLine($"import {Path.GetFileName(importSample)}: {preview.Rows.Count} rânduri, {preview.Messages.Count} mesaje, doleanțe: {preview.SuggestedUnavailable.Count}");
             }
 
             var auto = new AutoScheduleWindow { DataContext = new AutoScheduleViewModel() };
@@ -107,7 +128,7 @@ public static class SnapshotRunner
             Capture(msg, Path.Combine(dir, $"{i++:00}-dialog-confirmare.png"));
             msg.Close();
 
-            // panoul informativ (mod demonstrativ: o zi din semestru, ora 10:00)
+            // panoul informativ (simulare: o zi din semestru, ora 10:05)
             var s = store.Data.Settings;
             var bvm = new BoardViewModel();
             bvm.SimDate = SemesterCalendar.MondayOf(s.SemesterStart).AddDays(7 * 4 + 1);
@@ -120,7 +141,7 @@ public static class SnapshotRunner
             board.Close();
 
             // tema întunecată
-            var originalTheme = ThemeService.Current;
+            var originalTheme = userTheme;
             ThemeService.Apply("Dark");
             main.IsDark = true;
             main.Navigate(main.Dashboard);

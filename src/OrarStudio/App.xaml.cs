@@ -44,30 +44,40 @@ public partial class App : Application
         AppServices.Settings = settings;
         ThemeService.Apply(settings.Theme);
 
-        string? snapshotDir = ArgValue(e.Args, "--snapshot");
-        bool forceDemo = e.Args.Contains("--demo") || snapshotDir != null;
-        string? fileArg = e.Args.FirstOrDefault(a => !a.StartsWith("--") && File.Exists(a));
+        // Linia de comandă: OrarStudio.exe [proiect.orar] [--snapshot <dosar> [--import <fișier>]]
+        var (fileArg, options) = ParseArgs(e.Args);
+        options.TryGetValue("--snapshot", out var snapshotDir);
+        options.TryGetValue("--import", out var importSample);
 
         var store = AppServices.Store;
-        bool needDemo = false;
+        bool fresh = false;
         try
         {
-            if (fileArg != null && !forceDemo)
+            if (snapshotDir != null)
+            {
+                // diagnostic: se lucrează pe o copie în dosarul capturilor — nici fișierul original,
+                // nici spațiul de lucru al utilizatorului nu sunt modificate
+                Directory.CreateDirectory(snapshotDir);
+                var data = fileArg != null ? DataStore.ReadFile(fileArg) : new Dataset();
+                store.Load(data, Path.Combine(snapshotDir, fileArg != null ? Path.GetFileName(fileArg) : "Proiect nou.orar"), saveNow: false);
+                fresh = fileArg == null;
+            }
+            else if (fileArg != null)
             {
                 store.Open(fileArg);
                 settings.LastFile = fileArg;
             }
-            else if (!forceDemo && settings.LastFile != null && File.Exists(settings.LastFile))
+            else if (snapshotDir == null && settings.LastFile != null && File.Exists(settings.LastFile))
                 store.Open(settings.LastFile);
-            else if (!forceDemo && File.Exists(AppPaths.WorkspaceFile))
+            else if (snapshotDir == null && File.Exists(AppPaths.WorkspaceFile))
                 store.Load(DataStore.ReadFile(AppPaths.WorkspaceFile), null);
             else
-                needDemo = true;
+                fresh = true;   // prima pornire: proiect gol
         }
         catch (Exception ex)
         {
             Log.Error(ex, "Încărcarea datelor la pornire");
-            needDemo = true;
+            fresh = true;
         }
 
         var main = new MainViewModel();
@@ -76,36 +86,41 @@ public partial class App : Application
         MainWindow = window;
         window.Show();
 
-        _ = StartAsync(main, needDemo, snapshotDir);
+        _ = StartAsync(main, fresh, snapshotDir, importSample);
     }
 
-    private static async Task StartAsync(MainViewModel main, bool needDemo, string? snapshotDir)
+    private static async Task StartAsync(MainViewModel main, bool fresh, string? snapshotDir, string? importSample)
     {
-        var store = AppServices.Store;
-        if (needDemo)
-        {
-            await main.RunBusy("Se pregătesc datele demonstrative din fișierele-exemplu…", async () =>
-            {
-                var demo = await Task.Run(() => SampleData.Create());
-                store.Load(demo, snapshotDir != null ? Path.Combine(snapshotDir, "demo.orar") : null, saveNow: snapshotDir == null);
-            });
-            if (snapshotDir == null)
-                AppServices.Toasts.Show("Bun venit! S-au încărcat datele demonstrative: sarcina didactică din fișierele-exemplu și un orar generat automat.",
-                    ToastKind.Info, "Import propriu", () => main.ImportCommand.Execute(null), 9);
-        }
+        if (fresh && snapshotDir == null)
+            AppServices.Toasts.Show("Bun venit în Orar Studio! Începeți prin importul sarcinii didactice a departamentelor (.xlsx, .docx, .csv).",
+                ToastKind.Info, "Importă", () => main.ImportCommand.Execute(null), 10);
 
         var settings = AppServices.Settings;
         if (settings.ApiAutoStart && snapshotDir == null)
             await AppServices.Api.StartAsync(settings.ApiPort, settings.ApiLan);
 
         if (snapshotDir != null)
-            await SnapshotRunner.RunAsync(main, snapshotDir);
+            await SnapshotRunner.RunAsync(main, snapshotDir, importSample);
     }
 
-    private static string? ArgValue(string[] args, string name)
+    /// <summary>Separă fișierul de proiect de opțiunile de forma „--nume valoare".</summary>
+    private static (string? File, Dictionary<string, string> Options) ParseArgs(string[] args)
     {
-        int i = Array.IndexOf(args, name);
-        return i >= 0 && i + 1 < args.Length ? args[i + 1] : null;
+        string? file = null;
+        var options = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        for (int i = 0; i < args.Length; i++)
+        {
+            var a = args[i];
+            if (a.StartsWith("--"))
+            {
+                options[a] = i + 1 < args.Length && !args[i + 1].StartsWith("--") ? args[++i] : "";
+            }
+            else if (file == null && File.Exists(a))
+            {
+                file = a;
+            }
+        }
+        return (file, options);
     }
 
     protected override void OnExit(ExitEventArgs e)

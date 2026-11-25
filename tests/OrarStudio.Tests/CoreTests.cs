@@ -72,7 +72,7 @@ public class ImporterTests
     [Fact]
     public void SampleFiles_AreImportedCompletely()
     {
-        var d = SampleData.Create(schedule: false);
+        var d = SampleProject.Create(schedule: false);
         Assert.Equal(229, d.Activities.Count);
         Assert.Equal(24, d.Groups.Count);
         Assert.Contains(d.Groups, g => g.Code == "I2301" && g.Students == 32 && g.Subgroups.Count == 2);
@@ -143,7 +143,7 @@ public class SchedulerTests
     [Fact]
     public void AutoScheduler_PlacesSampleLoadWithoutConflicts()
     {
-        var d = SampleData.Create(schedule: false);
+        var d = SampleProject.Create(schedule: false);
         var result = AutoScheduler.Run(d, new AutoScheduleOptions());
         foreach (var l in result.Added) d.Lessons.Add(l);
         var lk = new Lookups(d);
@@ -156,7 +156,7 @@ public class SchedulerTests
     [Fact]
     public void AutoScheduler_RespectsTeacherUnavailability()
     {
-        var d = SampleData.Create(schedule: false);
+        var d = SampleProject.Create(schedule: false);
         var teacher = d.Teachers.First(t => t.Name == "L. Novac");
         for (int day = 0; day < 5; day++)
             for (int slot = 1; slot <= 3; slot++)
@@ -196,9 +196,9 @@ public class CalendarAndTextTests
 public class ExportTests
 {
     [Fact]
-    public void PdfExcelIcsAndBoard_AreGeneratedForSampleData()
+    public void PdfExcelIcsAndBoard_AreGeneratedForSampleProject()
     {
-        var d = SampleData.Create();
+        var d = SampleProject.Create();
         var lk = new Lookups(d);
         var group = TimetableBuilder.OrderedGroups(d).First();
 

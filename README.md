@@ -15,8 +15,8 @@ unei facultăți: **auditorii, discipline (obiecte), profesori, grupe și sarcin
 |---|---|
 | **Auditorii, obiecte, profesori** | Pagini dedicate (listă + formular): auditorii cu categorie, capacitate, destinație (curs / seminar / laborator), dotări; discipline cu abreviere, culoare, evaluare; profesori cu titlu, departament și **doleanțe** (intervale indisponibile); grupe cu subgrupe. |
 | **Informații despre auditorii (unde se fac laboratoare, seminare/cursuri)** | Fiecare sală are bife „Cursuri / Seminare / Laboratoare”, capacitate, nr. de calculatoare, proiector, tablă. Verificarea conflictelor avertizează la sală nepotrivită sau prea mică; generatorul alege sala potrivită automat. |
-| **Fișiere-exemplu** | Importul citește direct fișierele departamentelor: `DI_sem_1/3/5_Date pentru orar_2023-2024.xlsx` și `Date orar f-tea Mat&Inf … .docx` (plus CSV). Previzualizare editabilă, avertismente (grupe noi/greșeli de tipar), detectarea doleanțelor din text („Miercuri 13:00–15:00…” → miercuri, perechea IV). Datele demonstrative se generează din aceste fișiere. |
-| **Redactor manual dar flexibil (datele se transferă în tabelul orar)** | Panoul „De plasat” cu activitățile din sarcina didactică → **trageți în grilă**. Celulele se colorează în timp real: verde = liber, galben = fără sală potrivită / doleanță, roșu = conflict. Lecțiile se mută (drag), se copiază (Ctrl + drag), se scot din orar (drag înapoi sau Del). |
+| **Fișiere-exemplu** | Importul citește direct fișierele departamentelor: `DI_sem_1/3/5_Date pentru orar_2023-2024.xlsx` și `Date orar f-tea Mat&Inf … .docx` (plus CSV). Previzualizare editabilă, avertismente (grupe noi/greșeli de tipar), detectarea doleanțelor din text („Miercuri 13:00–15:00…” → miercuri, perechea IV). Fișierele-exemplu servesc ca date de test pentru import și generator (`tests/OrarStudio.Tests/TestData`). |
+| **Redactor manual dar flexibil (datele se transferă în tabelul orar)** | Panoul „De plasat” cu activitățile din sarcina didactică → **trageți în grilă**. Celulele se colorează în timp real: verde = liber, galben = fără sală potrivită / doleanță, roșu = conflict. Lecțiile se mută (drag), se copiază (Ctrl + drag), se scot din orar (drag înapoi sau Del). Pe lângă o singură grupă / un profesor / un auditoriu, editorul arată și **toate grupele, toți profesorii sau toate auditoriile** într-o matrice (zi × pereche × coloane), cu antete fixe și aceleași interacțiuni. |
 | **Orar flexibil, cu posibilitatea schimbării** | Săptămâni **pare / impare** („fracții”), **subgrupe** în paralel, cursuri pe **serii** (mai multe grupe), perechi și zile configurabile, blocarea lecțiilor, **Undo / Redo** (Ctrl+Z / Ctrl+Y, până la 80 de pași), salvare automată, generare automată (completare sau regenerare). |
 | **Export (PDF etc.)** | PDF (grupă / profesor / auditoriu / toate / orarul general A3, cu previzualizare), Excel (orar general + foaie pe grupă + liste), CSV, iCalendar (.ics) pentru telefon, JSON, site static. |
 | **Publicare pe website prin API** | Server **ASP.NET Core** integrat: API REST JSON (CORS deschis), site public al orarului (responsiv, încorporabil prin iframe), PDF/iCal la cerere, documentație la `/docs`; plus publicare „push” (POST JSON + token) către site-ul facultății. |
@@ -39,6 +39,8 @@ unei facultăți: **auditorii, discipline (obiecte), profesori, grupe și sarcin
 | Panoul informativ (ecran pe hol) | Site-ul public al orarului (prin API) |
 | ![Auditorii](docs/screenshots/auditorii.png) | ![Tema întunecată](docs/screenshots/tema-intunecata.png) |
 | Auditoriile și destinația lor | Tema întunecată |
+| ![Toate grupele](docs/screenshots/editor-toate-grupele.png) | ![Primii pași](docs/screenshots/primii-pasi.png) |
+| Editorul: toate grupele într-o singură matrice | Prima pornire: proiect gol și primii pași |
 
 ---
 
@@ -47,7 +49,7 @@ unei facultăți: **auditorii, discipline (obiecte), profesori, grupe și sarcin
 ### Varianta gata compilată
 Descărcați **`OrarStudio-1.0.0-win-x64.zip`** din [Releases](https://github.com/ProiectDeSemestru/OrarStudio/releases/latest),
 dezarhivați și porniți `OrarStudio.exe` — un singur fișier, **nu necesită instalarea .NET** (Windows 10/11, x64).
-La prima pornire se încarcă datele demonstrative (sarcina didactică din fișierele-exemplu + un orar generat automat).
+La prima pornire aplicația deschide un proiect gol, cu pașii de început: importul sarcinii didactice, auditoriile și generarea orarului.
 
 ### Din codul sursă
 Necesar: **.NET SDK 10** (sau Visual Studio 2026 cu componenta *„.NET desktop development”*).
@@ -59,8 +61,9 @@ dotnet test                                   # 32 de teste unitare
 dotnet publish src\OrarStudio -c Release -r win-x64 --self-contained -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o dist
 ```
 
-Opțiuni de linie de comandă: `OrarStudio.exe <fișier.orar>` deschide un proiect; `--demo` reîncarcă datele demonstrative;
-`--snapshot <dosar>` (diagnostic) salvează capturi ale tuturor ecranelor și testează API-ul.
+Opțiuni de linie de comandă: `OrarStudio.exe <fișier.orar>` deschide un proiect;
+`OrarStudio.exe <fișier.orar> --snapshot <dosar> [--import <fișier>]` (diagnostic) salvează capturi ale tuturor ecranelor,
+pe o copie a proiectului, și testează API-ul.
 
 ---
 
@@ -82,6 +85,8 @@ Opțiuni de linie de comandă: `OrarStudio.exe <fișier.orar>` deschide un proie
 | Dublu-clic pe o activitate | Plasare automată |
 | Clic dreapta pe lecție | Periodicitate, schimbare auditoriu, blocare, deschiderea orarului grupei/profesorului/sălii, ștergere |
 | Clic dreapta pe celulă (perspectiva Profesor) | Marchează intervalul ca indisponibil (doleanță) |
+| „Toate grupele” / „Toți profesorii” / „Toate auditoriile” (primul rând din selector) | Tot orarul într-o matrice. O lecție se mută în coloanele grupelor ei (sau ale profesorului ei); la auditorii, mutarea în altă coloană îi schimbă și sala. PDF-ul exportă toate orarele |
+| Dublu-clic pe antetul unei coloane (în „Toate …”) | Deschide orarul acelei grupe / acelui profesor / acelei săli |
 | `Del` · `Enter` · `Esc` · `Ctrl+L` · `Alt+←↑→↓` · `PgUp/PgDn` | Ștergere · editare · deselectare · blocare · mutare cu tastatura · entitatea precedentă/următoare |
 
 Comenzi globale: `Ctrl+Z` / `Ctrl+Y` (anulare/refacere), `Ctrl+S` (salvare), `Ctrl+Shift+S` (salvare ca), `Ctrl+O` (deschidere),
@@ -111,7 +116,7 @@ Comenzi globale: `Ctrl+Z` / `Ctrl+Y` (anulare/refacere), `Ctrl+S` (salvare), `Ct
 ```
 src/OrarStudio
 ├── Models/        entități (Room, Subject, Teacher, StudentGroup, TeachingActivity, Lesson…), Audience (grupe/subgrupe), calendarul semestrului
-├── Services/      DataStore (sursa unică de date, Undo/Redo, salvare automată), ConflictService, AutoScheduler, TimetableBuilder, SampleData
+├── Services/      DataStore (sursa unică de date, Undo/Redo, salvare automată), ConflictService, AutoScheduler, TimetableBuilder
 ├── Import/        LoadImporter — parsarea fișierelor .xlsx (ClosedXML), .docx (OpenXML), .csv
 ├── Export/        PDF (QuestPDF), Excel (ClosedXML), CSV, iCalendar
 ├── Api/           ApiServer (ASP.NET Core Minimal API), BoardLogic, DTO-uri, publicare webhook, site static
@@ -120,6 +125,7 @@ src/OrarStudio
 ├── Themes/        sistemul de design (temă luminoasă/întunecată, stiluri pentru toate controalele)
 └── Web/           site-ul public, panoul web și documentația API (resurse încorporate)
 tests/OrarStudio.Tests   teste xUnit: parsare, conflicte, săptămâni pare/impare, generare, export
+                         (TestData: sarcina didactică reală a departamentelor, folosită ca date de test)
 ```
 
 - **Date:** proiectul se salvează ca JSON (`*.orar`), automat, în `%LOCALAPPDATA%\OrarStudio\orar-curent.orar` (sau în fișierul ales cu „Salvează ca”).

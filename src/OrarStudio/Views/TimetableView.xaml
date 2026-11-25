@@ -70,6 +70,10 @@
                     <Setter TargetName="TitleText" Property="FontSize" Value="11.5"/>
                     <Setter TargetName="TypeChip" Property="Visibility" Value="Collapsed"/>
                 </DataTrigger>
+                <DataTrigger Binding="{Binding Mini}" Value="True">
+                    <Setter TargetName="Chips" Property="Visibility" Value="Collapsed"/>
+                    <Setter TargetName="Line2" Property="FontSize" Value="10.5"/>
+                </DataTrigger>
                 <DataTrigger Binding="{Binding Locked}" Value="True">
                     <Setter TargetName="LockIcon" Property="Visibility" Value="Visible"/>
                 </DataTrigger>
@@ -144,6 +148,11 @@
                 </Grid>
             </Border>
             <DataTemplate.Triggers>
+                <DataTrigger Binding="{Binding Compact}" Value="True">
+                    <Setter TargetName="CellBorder" Property="MinHeight" Value="0"/>
+                    <Setter TargetName="CellBorder" Property="Margin" Value="2"/>
+                    <Setter TargetName="CellBorder" Property="CornerRadius" Value="8"/>
+                </DataTrigger>
                 <DataTrigger Binding="{Binding IsToday}" Value="True">
                     <Setter TargetName="CellBorder" Property="Background" Value="{DynamicResource Brush.Today}"/>
                 </DataTrigger>
@@ -209,6 +218,57 @@
                 <TextBlock Text="{Binding End}" FontSize="11" Foreground="{DynamicResource Brush.TextMuted}" HorizontalAlignment="Center"/>
             </StackPanel>
         </DataTemplate>
+
+        <!-- ─────────── Vizualizarea „Toate …": antetul coloanei, ziua, perechea ─────────── -->
+        <DataTemplate DataType="{x:Type vm:EntityHeaderVM}">
+            <Border x:Name="Head" Background="{DynamicResource Brush.SurfaceAlt}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="0,0,1,1"
+                    Padding="6,4" Cursor="Hand" Tag="{Binding}" ToolTip="{Binding Tooltip}" MouseLeftButtonDown="EntityHeader_MouseLeftButtonDown">
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="{Binding Label}" FontWeight="Bold" FontSize="12.5" HorizontalAlignment="Center" TextTrimming="CharacterEllipsis"
+                               Foreground="{DynamicResource Brush.Text}"/>
+                    <TextBlock Text="{Binding Detail}" FontSize="10.5" HorizontalAlignment="Center" TextTrimming="CharacterEllipsis"
+                               Foreground="{DynamicResource Brush.TextMuted}"/>
+                </StackPanel>
+            </Border>
+            <DataTemplate.Triggers>
+                <Trigger SourceName="Head" Property="IsMouseOver" Value="True">
+                    <Setter TargetName="Head" Property="Background" Value="{DynamicResource Brush.AccentSoft}"/>
+                </Trigger>
+            </DataTemplate.Triggers>
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vm:MatrixDayVM}">
+            <Border Background="{DynamicResource Brush.AccentSoft}" BorderBrush="{DynamicResource Brush.BorderStrong}" BorderThickness="0,0,1,2">
+                <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="11.5" Foreground="{DynamicResource Brush.AccentSoftText}"
+                           VerticalAlignment="Center" HorizontalAlignment="Center">
+                    <TextBlock.LayoutTransform>
+                        <RotateTransform Angle="-90"/>
+                    </TextBlock.LayoutTransform>
+                </TextBlock>
+            </Border>
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vm:MatrixSlotVM}">
+            <Border x:Name="B" BorderBrush="{DynamicResource Brush.GridLine}" BorderThickness="0,0,1,1">
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="{Binding Roman}" FontWeight="Bold" FontSize="14" Foreground="{DynamicResource Brush.Accent}" HorizontalAlignment="Center"/>
+                    <TextBlock Text="{Binding Time}" FontSize="10" Foreground="{DynamicResource Brush.TextMuted}" HorizontalAlignment="Center"/>
+                </StackPanel>
+            </Border>
+            <DataTemplate.Triggers>
+                <DataTrigger Binding="{Binding LastOfDay}" Value="True">
+                    <Setter TargetName="B" Property="BorderThickness" Value="0,0,1,2"/>
+                    <Setter TargetName="B" Property="BorderBrush" Value="{DynamicResource Brush.BorderStrong}"/>
+                </DataTrigger>
+            </DataTemplate.Triggers>
+        </DataTemplate>
+
+        <Style x:Key="MatrixItem" TargetType="ContentPresenter">
+            <Setter Property="Grid.Row" Value="{Binding Row}"/>
+            <Setter Property="Grid.Column" Value="{Binding Col}"/>
+            <Setter Property="Grid.RowSpan" Value="{Binding RowSpan}"/>
+            <Setter Property="Grid.ColumnSpan" Value="{Binding ColSpan}"/>
+        </Style>
 
         <!-- ─────────── Activitate de plasat (panoul din stânga) ─────────── -->
         <DataTemplate DataType="{x:Type vm:ActivityItemVM}">
@@ -380,9 +440,17 @@
                         <ComboBox.ItemTemplate>
                             <DataTemplate DataType="{x:Type vm:EntityOption}">
                                 <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="{Binding Label}" FontWeight="SemiBold"/>
+                                    <TextBlock x:Name="AllIcon" Text="&#xE71D;" Style="{StaticResource Icon}" FontSize="12" Foreground="{DynamicResource Brush.Accent}"
+                                               Margin="0,0,7,0" Visibility="Collapsed"/>
+                                    <TextBlock x:Name="LabelText" Text="{Binding Label}" FontWeight="SemiBold"/>
                                     <TextBlock Text="{Binding Detail}" Foreground="{DynamicResource Brush.TextMuted}" Margin="8,0,0,0" FontSize="12" TextTrimming="CharacterEllipsis" MaxWidth="180"/>
                                 </StackPanel>
+                                <DataTemplate.Triggers>
+                                    <DataTrigger Binding="{Binding IsAll}" Value="True">
+                                        <Setter TargetName="AllIcon" Property="Visibility" Value="Visible"/>
+                                        <Setter TargetName="LabelText" Property="Foreground" Value="{DynamicResource Brush.Accent}"/>
+                                    </DataTrigger>
+                                </DataTemplate.Triggers>
                             </DataTemplate>
                         </ComboBox.ItemTemplate>
                     </ComboBox>
@@ -398,7 +466,8 @@
                 </StackPanel>
             </Grid>
 
-            <Border Grid.Row="1" Style="{StaticResource Card}" Padding="10,10,6,6">
+            <Border Grid.Row="1" Style="{StaticResource Card}" Padding="10,10,6,6"
+                    Visibility="{Binding IsMatrix, Converter={StaticResource BoolToVisInv}}">
                 <ScrollViewer x:Name="GridScroll" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Focusable="False">
                     <ItemsControl ItemsSource="{Binding GridItems}" Focusable="False" HorizontalAlignment="Left"
                                   MinHeight="{Binding ViewportHeight, ElementName=GridScroll}">
@@ -421,6 +490,57 @@
                         </ItemsControl.ItemContainerStyle>
                     </ItemsControl>
                 </ScrollViewer>
+            </Border>
+
+            <!-- ═════════ „Toate grupele / profesorii / auditoriile": rânduri = zi × pereche, coloane = entități ═════════ -->
+            <Border Grid.Row="1" Style="{StaticResource Card}" Padding="0" ClipToBounds="True"
+                    Visibility="{Binding IsMatrix, Converter={StaticResource BoolToVis}}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Border Width="110" Height="52" Background="{DynamicResource Brush.SurfaceAlt}" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="0,0,1,1">
+                        <TextBlock Text="Zi / pereche" FontSize="11.5" FontWeight="SemiBold" Foreground="{DynamicResource Brush.TextSecondary}"
+                                   VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                    </Border>
+                    <ScrollViewer x:Name="MatrixHeaderScroll" Grid.Column="1" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled" Focusable="False">
+                        <ItemsControl ItemsSource="{Binding MatrixHeaderItems}" Focusable="False" Margin="0,0,18,0" HorizontalAlignment="Left"
+                                      ItemContainerStyle="{StaticResource MatrixItem}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <Grid ui:GridDefs.Columns="{Binding MatrixColumnSpec}" Height="52"/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                        </ItemsControl>
+                    </ScrollViewer>
+                    <ScrollViewer x:Name="MatrixLeftScroll" Grid.Row="1" VerticalScrollBarVisibility="Hidden" HorizontalScrollBarVisibility="Disabled" Focusable="False">
+                        <ItemsControl ItemsSource="{Binding MatrixLeftItems}" Focusable="False" Margin="0,0,0,18" VerticalAlignment="Top"
+                                      ItemContainerStyle="{StaticResource MatrixItem}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <Grid ui:GridDefs.Columns="36 74" ui:GridDefs.Rows="{Binding MatrixRowSpec}"/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                        </ItemsControl>
+                    </ScrollViewer>
+                    <ScrollViewer x:Name="MatrixBodyScroll" Grid.Row="1" Grid.Column="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"
+                                  ScrollChanged="MatrixBody_ScrollChanged" Focusable="False">
+                        <ItemsControl ItemsSource="{Binding MatrixCellItems}" Focusable="False" HorizontalAlignment="Left" VerticalAlignment="Top"
+                                      ItemContainerStyle="{StaticResource MatrixItem}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <Grid ui:GridDefs.Columns="{Binding MatrixColumnSpec}" ui:GridDefs.Rows="{Binding MatrixRowSpec}"/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Grid>
             </Border>
 
             <DockPanel Grid.Row="2" Margin="4,10,4,0">

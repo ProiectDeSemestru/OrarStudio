@@ -207,7 +207,7 @@
             <StackPanel Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center" Visibility="{Binding IsEmpty, Converter={StaticResource BoolToVis}}">
                 <TextBlock Text="&#xE787;" FontFamily="{StaticResource Font.Icons}" FontSize="46" Foreground="{StaticResource B.Dim}" HorizontalAlignment="Center"/>
                 <TextBlock Text="În acest moment nu sunt lecții" FontSize="26" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,16,0,6"/>
-                <TextBlock Text="Pentru demonstrație activați „Mod demonstrativ” în bara de jos și alegeți o zi și o oră din semestru."
+                <TextBlock Text="Pentru a verifica panoul în afara orelor, activați „Simulare” în bara de jos și alegeți o zi și o oră din semestru."
                            FontSize="15" Foreground="{StaticResource B.Muted}" HorizontalAlignment="Center"/>
             </StackPanel>
         </Grid>
@@ -282,7 +282,7 @@
                         </ListBox.ItemTemplate>
                     </ListBox>
                     <ToggleButton Style="{StaticResource BoardToggle}" Content="Doar sălile/grupele active" IsChecked="{Binding OnlyActive}" Margin="10,0,0,0" VerticalAlignment="Center"/>
-                    <ToggleButton Style="{StaticResource BoardToggle}" Content="Mod demonstrativ" IsChecked="{Binding Simulate}" Margin="10,0,0,0" VerticalAlignment="Center"/>
+                    <ToggleButton Style="{StaticResource BoardToggle}" Content="Simulare" IsChecked="{Binding Simulate}" Margin="10,0,0,0" VerticalAlignment="Center"/>
                     <StackPanel Orientation="Horizontal" Margin="10,0,0,0" VerticalAlignment="Center" Visibility="{Binding Simulate, Converter={StaticResource BoolToVis}}">
                         <DatePicker SelectedDate="{Binding SimDate}" Width="140" Background="{StaticResource B.Card}" Foreground="#F1F5F9" BorderBrush="{StaticResource B.Line}"/>
                         <TextBox Text="{Binding SimTime, UpdateSourceTrigger=PropertyChanged}" Width="70" Margin="6,0,0,0" Background="{StaticResource B.Card}"

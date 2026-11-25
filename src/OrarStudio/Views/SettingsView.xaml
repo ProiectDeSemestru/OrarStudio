@@ -150,13 +150,6 @@
                             <Button ui:Ui.Icon="&#xE8E5;" Content="Deschide…" Command="{Binding DataContext.OpenCommand, RelativeSource={RelativeSource AncestorType=Window}}" Margin="0,0,8,8"/>
                             <Button ui:Ui.Icon="&#xE8F4;" Content="Proiect nou…" Command="{Binding DataContext.NewProjectCommand, RelativeSource={RelativeSource AncestorType=Window}}" Margin="0,0,8,8"/>
                         </WrapPanel>
-                        <Border Style="{StaticResource Divider}"/>
-                        <TextBlock Text="Fișiere-exemplu" Style="{StaticResource Text.H3}" FontSize="13"/>
-                        <TextBlock Text="Sarcina didactică a departamentelor (DI semestrele I, III, V — .xlsx; Matematică — .docx). Se pot importa din nou oricând." Style="{StaticResource Text.Muted}" TextWrapping="Wrap" Margin="0,2,0,10"/>
-                        <WrapPanel>
-                            <Button ui:Ui.Icon="&#xE8B7;" Content="Deschide dosarul cu exemple" Command="{Binding OpenSamplesCommand}" Margin="0,0,8,8"/>
-                            <Button Style="{StaticResource Btn.Soft}" ui:Ui.Icon="&#xE7BE;" Content="Reîncarcă datele demonstrative" Command="{Binding DataContext.LoadDemoCommand, RelativeSource={RelativeSource AncestorType=Window}}" Margin="0,0,8,8"/>
-                        </WrapPanel>
                     </StackPanel>
                 </Border>
             </StackPanel>
