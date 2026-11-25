@@ -50,4 +50,25 @@ jobs:
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create $env:TAG $env:ZIP --title "Orar Studio $env:VERSION" --notes-file .github/release-notes.md
+          GH_REPO: ${{ github.repository }}
+        run: |
+          # Tolerant la erorile temporare ale GitHub: ciorna rămasă de la o rulare eșuată se refolosește,
+          # iar fiecare pas se reîncearcă de câteva ori înainte de a renunța.
+          function Invoke-WithRetry([string]$What, [scriptblock]$Action) {
+            for ($i = 1; $i -le 5; $i++) {
+              & $Action
+              if ($LASTEXITCODE -eq 0) { return }
+              Write-Host "::warning::$What a eșuat (încercarea $i din 5)"
+              if ($i -lt 5) { Start-Sleep -Seconds (30 * $i) }
+            }
+            throw "$What a eșuat de 5 ori"
+          }
+
+          Invoke-WithRetry 'Crearea release-ului' {
+            gh release view $env:TAG --json tagName *> $null
+            if ($LASTEXITCODE -ne 0) {
+              gh release create $env:TAG --draft --verify-tag --title "Orar Studio $env:VERSION" --notes-file .github/release-notes.md
+            }
+          }
+          Invoke-WithRetry 'Încărcarea arhivei' { gh release upload $env:TAG $env:ZIP --clobber }
+          Invoke-WithRetry 'Publicarea release-ului' { gh release edit $env:TAG --draft=false }
